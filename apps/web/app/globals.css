@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── TerahBank Design System — CSS variables ─────────────────────────────── */
+/* Source: packages/tokens/src/index.ts → cssVariables.colors                */
+
+:root {
+  --color-navy:       #0B1F4A;
+  --color-teal:       #00B4D8;
+  --color-teal-dark:  #0096B4;
+  --color-off-white:  #F4F7FB;
+  --color-light-grey: #E8EDF5;
+  --color-mid-grey:   #8A97B5;
+  --color-dark-grey:  #4A5568;
+  --color-dark-navy:  #162D5E;
+  --color-white:      #FFFFFF;
+  --color-success:    #00C48C;
+  --color-warning:    #FFB020;
+  --color-error:      #E53E3E;
+
+  /* Font variables set by next/font in layout.tsx */
+  /* --font-poppins: injected by Next.js */
+  /* --font-roboto:  injected by Next.js */
+}
+
+/* ── Base styles ─────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Smooth font rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  /* Off-white background — NEVER pure white */
+  background-color: #F4F7FB;
+  color: #4A5568;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* ── Focus ring — WCAG 2.1 AA — never remove this ───────────────────────── */
+:focus-visible {
+  outline: 2px solid #00B4D8;
+  outline-offset: 2px;
+}
+
+/* ── Scrollbar styling ───────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F4F7FB;
+}
+::-webkit-scrollbar-thumb {
+  background: #E8EDF5;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8A97B5;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

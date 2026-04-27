@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── TerahBank Design System — CSS variables ─────────────────────────────── */
+:root {
+  --color-navy:       #0B1F4A;
+  --color-teal:       #00B4D8;
+  --color-teal-dark:  #0096B4;
+  --color-off-white:  #F4F7FB;
+  --color-light-grey: #E8EDF5;
+  --color-mid-grey:   #8A97B5;
+  --color-dark-grey:  #4A5568;
+  --color-dark-navy:  #162D5E;
+  --color-white:      #FFFFFF;
+  --color-success:    #00C48C;
+  --color-warning:    #FFB020;
+  --color-error:      #E53E3E;
+
+  /* Admin sidebar widths */
+  --sidebar-width:           240px;
+  --sidebar-width-collapsed:  64px;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #F4F7FB;
+  color: #4A5568;
+  font-family: var(--font-roboto), system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* ── Focus ring — WCAG 2.1 AA — never remove ────────────────────────────── */
+:focus-visible {
+  outline: 2px solid #00B4D8;
+  outline-offset: 2px;
+}
+
+/* ── Admin sidebar ───────────────────────────────────────────────────────── */
+/* Active nav item: teal left border 3px + teal 10% row fill */
+.admin-nav-active {
+  border-left: 3px solid #00B4D8;
+  background-color: rgba(0, 180, 216, 0.10);
+}
+
+/* ── Admin data table ────────────────────────────────────────────────────── */
+.admin-table th {
+  background-color: #0B1F4A;
+  color: #FFFFFF;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 600;
+}
+.admin-table tr:nth-child(even) {
+  background-color: #F4F7FB;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

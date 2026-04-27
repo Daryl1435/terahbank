@@ -1,0 +1,14 @@
+{
+  "name": "@terahbank/tokens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TerahBank Design System — colors, typography, spacing tokens",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

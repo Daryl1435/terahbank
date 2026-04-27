@@ -1,0 +1,17 @@
+{
+  "name": "terahbank",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/web",
+    "apps/admin"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "web": "npm run dev --workspace=apps/web",
+    "admin": "npm run dev --workspace=apps/admin",
+    "type-check": "npm run type-check --workspaces --if-present"
+  }
+}

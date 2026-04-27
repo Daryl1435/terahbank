@@ -1,0 +1,57 @@
+# ─── Environment & Secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+CLAUDE.local.md
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ─── Node / Frontend ──────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.expo/
+*.tgz
+
+# ─── JWT Keys ─────────────────────────────────────────────────────────────────
+*.pem
+secrets/
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+
+# ─── Claude Code local data ───────────────────────────────────────────────────
+.claude/
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Alembic ──────────────────────────────────────────────────────────────────
+# Keep versions/ but ignore any local alembic.ini overrides
+alembic.ini.local

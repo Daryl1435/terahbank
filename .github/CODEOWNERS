@@ -1,0 +1,37 @@
+# TerahBank Code Owners
+# These users/teams are auto-requested as reviewers on PRs touching these paths.
+# Syntax: path  @user-or-team
+
+# ─── Global fallback ────────────────────────────────────────────────────────
+*                           @ibridge-team/terahbank-core
+
+# ─── Critical financial code ────────────────────────────────────────────────
+# Any change here requires a senior review
+apps/api/modules/transactions/   @ibridge-team/backend-leads
+apps/api/modules/accounts/       @ibridge-team/backend-leads
+apps/api/core/security.py        @ibridge-team/backend-leads
+apps/api/core/audit.py           @ibridge-team/backend-leads
+
+# ─── Database migrations (high risk) ────────────────────────────────────────
+apps/api/alembic/                @ibridge-team/backend-leads
+
+# ─── CI/CD & infrastructure ─────────────────────────────────────────────────
+.github/                         @ibridge-team/devops
+infrastructure/                  @ibridge-team/devops
+docker-compose.yml               @ibridge-team/devops
+apps/api/Dockerfile              @ibridge-team/devops
+
+# ─── Compliance & KYC ───────────────────────────────────────────────────────
+apps/api/modules/kyc/            @ibridge-team/compliance
+docs/security.md                 @ibridge-team/compliance
+
+# ─── Mobile ─────────────────────────────────────────────────────────────────
+apps/mobile/                     @ibridge-team/mobile
+
+# ─── Web portals ────────────────────────────────────────────────────────────
+apps/web/                        @ibridge-team/frontend
+apps/admin/                      @ibridge-team/frontend
+
+# ─── Documentation ──────────────────────────────────────────────────────────
+docs/                            @ibridge-team/terahbank-core
+CLAUDE.md                        @ibridge-team/terahbank-core

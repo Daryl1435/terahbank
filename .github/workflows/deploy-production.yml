@@ -1,0 +1,92 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: af-south-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.af-south-1.amazonaws.com
+  ECS_CLUSTER: terahbank-prod
+
+jobs:
+  deploy:
+    name: Deploy API → Production ECS
+    runs-on: ubuntu-latest
+    environment: production    # Requires manual approval from a reviewer in GitHub
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (production)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push production image
+        run: |
+          IMAGE_TAG=prod-${{ github.sha }}
+          docker build -t terahbank-api ./apps/api
+          docker tag terahbank-api:latest $ECR_REGISTRY/terahbank-api:$IMAGE_TAG
+          docker tag terahbank-api:latest $ECR_REGISTRY/terahbank-api:prod-latest
+          docker push $ECR_REGISTRY/terahbank-api:$IMAGE_TAG
+          docker push $ECR_REGISTRY/terahbank-api:prod-latest
+          echo "IMAGE=$ECR_REGISTRY/terahbank-api:$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Run DB migrations (production)
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster $ECS_CLUSTER \
+            --task-definition terahbank-migration-prod \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.PROD_SUBNET_ID }}],securityGroups=[${{ secrets.PROD_SG_ID }}]}" \
+            --overrides '{"containerOverrides":[{"name":"api","command":["alembic","upgrade","head"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster $ECS_CLUSTER --tasks $TASK_ARN
+          EXIT_CODE=$(aws ecs describe-tasks --cluster $ECS_CLUSTER --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          if [ "$EXIT_CODE" != "0" ]; then echo "Migration failed — aborting deployment"; exit 1; fi
+
+      - name: Deploy API to production ECS
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service terahbank-api \
+            --force-new-deployment
+          aws ecs wait services-stable \
+            --cluster $ECS_CLUSTER \
+            --services terahbank-api
+
+      - name: Deploy web + admin to Vercel (production)
+        run: |
+          cd apps/web && npm ci && npx vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+          cd apps/admin && npm ci && npx vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }}
+
+      - name: Smoke test production
+        run: |
+          curl -f https://api.terahbank.com/api/v1/health || exit 1
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Production deployment successful — ${{ github.sha }}"
+          # Add Slack/email notification here when ready
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Deployment failed — rolling back ECS service to previous task definition"
+          PREV_TASK_DEF=$(aws ecs describe-services \
+            --cluster $ECS_CLUSTER \
+            --services terahbank-api \
+            --query 'services[0].taskDefinition' --output text)
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service terahbank-api \
+            --task-definition $PREV_TASK_DEF
