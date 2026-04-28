@@ -1,5 +1,5 @@
-import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -11,9 +11,13 @@ import {
   Poppins_700Bold,
 } from '@expo-google-fonts/poppins';
 import { Roboto_400Regular, Roboto_500Medium } from '@expo-google-fonts/roboto';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import AnimatedSplash from '@/components/AnimatedSplash';
+
+SplashScreen.preventAutoHideAsync();
 
 import { useAuthStore } from '@/stores/authStore';
 import { colors } from '@/utils/tokens';
@@ -198,13 +202,20 @@ export default function App() {
     Roboto_400Regular,
     Roboto_500Medium,
   });
+  const [showAnimatedSplash, setShowAnimatedSplash] = useState(true);
 
+  // Hide the native splash as soon as fonts are ready, then our animated splash takes over
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  const onSplashFinish = useCallback(() => setShowAnimatedSplash(false), []);
+
+  // Keep native splash up until fonts load
   if (!fontsLoaded && !fontError) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.navy }}>
-        <ActivityIndicator size="large" color={colors.teal} />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: colors.navy }} />;
   }
 
   return (
@@ -215,6 +226,7 @@ export default function App() {
           <NavigationContainer>
             <AppNavigator />
           </NavigationContainer>
+          {showAnimatedSplash && <AnimatedSplash onFinish={onSplashFinish} />}
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

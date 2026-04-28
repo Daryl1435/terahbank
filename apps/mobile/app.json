@@ -9,6 +9,7 @@
     "backgroundColor": "#F4F7FB",
     "primaryColor": "#00B4D8",
     "splash": {
+      "image": "./assets/splash.png",
       "backgroundColor": "#0B1F4A",
       "resizeMode": "contain"
     },
@@ -25,6 +26,7 @@
       ]
     },
     "plugins": [
+      "expo-splash-screen",
       "expo-secure-store",
       "expo-local-authentication",
       [
