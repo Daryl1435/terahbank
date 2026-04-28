@@ -41,7 +41,7 @@ export default function TransactionsPage() {
         offset,
         limit: PAGE_SIZE,
       }),
-    refetchInterval: 15_000, // refresh every 15s for near-real-time feed
+    refetchInterval: 15_000,
   });
 
   const txns  = data?.data.transactions ?? [];
@@ -58,14 +58,14 @@ export default function TransactionsPage() {
         <div>
           <h1 className="font-poppins font-semibold text-2xl text-navy">Transactions</h1>
           <p className="text-mid-grey text-sm mt-1">
-            {total} résultat{total !== 1 ? 's' : ''} · rafraîchissement auto 15s
+            {total} result{total !== 1 ? 's' : ''} · auto-refresh every 15s
           </p>
         </div>
         <button
           onClick={() => refetch()}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
         >
-          ↻ Rafraîchir
+          ↻ Refresh
         </button>
       </div>
 
@@ -83,7 +83,7 @@ export default function TransactionsPage() {
           onChange={(e) => { setTransactionType(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">Tous types</option>
+          <option value="">All types</option>
           {TRANSACTION_TYPES.slice(1).map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
         <select
@@ -91,7 +91,7 @@ export default function TransactionsPage() {
           onChange={(e) => { setChannel(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">Tous canaux</option>
+          <option value="">All channels</option>
           {CHANNELS.slice(1).map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select
@@ -99,7 +99,7 @@ export default function TransactionsPage() {
           onChange={(e) => { setTxnStatus(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">Tous statuts</option>
+          <option value="">All statuses</option>
           {STATUSES.slice(1).map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <input
@@ -107,20 +107,20 @@ export default function TransactionsPage() {
           value={dateFrom}
           onChange={(e) => { setDateFrom(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
-          title="Date de début"
+          title="Start date"
         />
         <input
           type="date"
           value={dateTo}
           onChange={(e) => { setDateTo(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
-          title="Date de fin"
+          title="End date"
         />
         <button
           onClick={applyFilters}
           className="px-4 py-2 bg-teal text-white rounded-lg text-sm font-medium hover:bg-teal-dark transition-colors"
         >
-          Appliquer
+          Apply
         </button>
       </div>
 
@@ -129,20 +129,20 @@ export default function TransactionsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><LoadingSpinner className="w-8 h-8" /></div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Erreur de chargement.</p>
+          <p className="text-error text-sm text-center py-16">Failed to load transactions.</p>
         ) : txns.length === 0 ? (
-          <p className="text-mid-grey text-sm text-center py-16">Aucune transaction trouvée.</p>
+          <p className="text-mid-grey text-sm text-center py-16">No transactions found.</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm admin-table">
                 <thead>
                   <tr>
-                    <th className="text-left px-4 py-3">Référence</th>
+                    <th className="text-left px-4 py-3">Reference</th>
                     <th className="text-left px-4 py-3">Type</th>
-                    <th className="text-left px-4 py-3">Canal</th>
-                    <th className="text-right px-4 py-3">Montant</th>
-                    <th className="text-left px-4 py-3">Statut</th>
+                    <th className="text-left px-4 py-3">Channel</th>
+                    <th className="text-right px-4 py-3">Amount</th>
+                    <th className="text-left px-4 py-3">Status</th>
                     <th className="text-left px-4 py-3">Date</th>
                   </tr>
                 </thead>

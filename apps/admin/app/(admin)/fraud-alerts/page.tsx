@@ -10,14 +10,14 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 const PAGE_SIZE = 50;
 
 const RULE_LABELS: Record<string, { label: string; color: string }> = {
-  LARGE_TRANSACTION:            { label: 'Transaction importante',       color: 'bg-error/10 text-error border-error/30' },
-  VELOCITY_BREACH:              { label: 'Vélocité excessive',            color: 'bg-error/10 text-error border-error/30' },
-  NEW_DEVICE_LARGE_WITHDRAWAL:  { label: 'Nouveau appareil + retrait',    color: 'bg-warning/10 text-warning border-warning/30' },
-  NEW_ACCOUNT_RECIPIENT:        { label: 'Destinataire nouveau compte',   color: 'bg-warning/10 text-warning border-warning/30' },
+  LARGE_TRANSACTION:            { label: 'Large transaction',          color: 'bg-error/10 text-error border-error/30' },
+  VELOCITY_BREACH:              { label: 'Velocity breach',            color: 'bg-error/10 text-error border-error/30' },
+  NEW_DEVICE_LARGE_WITHDRAWAL:  { label: 'New device + large withdrawal', color: 'bg-warning/10 text-warning border-warning/30' },
+  NEW_ACCOUNT_RECIPIENT:        { label: 'New account recipient',      color: 'bg-warning/10 text-warning border-warning/30' },
 };
 
 export default function FraudAlertsPage() {
-  const [offset,  setOffset]  = useState(0);
+  const [offset,   setOffset]   = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
@@ -32,9 +32,9 @@ export default function FraudAlertsPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">Alertes fraude</h1>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">Fraud Alerts</h1>
         <p className="text-mid-grey text-sm mt-1">
-          {total} alerte{total !== 1 ? 's' : ''} enregistrée{total !== 1 ? 's' : ''} · rafraîchissement auto 30s
+          {total} alert{total !== 1 ? 's' : ''} recorded · auto-refresh every 30s
         </p>
       </div>
 
@@ -54,12 +54,12 @@ export default function FraudAlertsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><LoadingSpinner className="w-8 h-8" /></div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Erreur de chargement.</p>
+          <p className="text-error text-sm text-center py-16">Failed to load alerts.</p>
         ) : alerts.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-3xl mb-3">🛡</p>
-            <p className="font-poppins font-semibold text-navy">Aucune alerte</p>
-            <p className="text-mid-grey text-sm mt-1">Aucune activité suspecte détectée.</p>
+            <p className="font-poppins font-semibold text-navy">No alerts</p>
+            <p className="text-mid-grey text-sm mt-1">No suspicious activity detected.</p>
           </div>
         ) : (
           <>
@@ -87,7 +87,7 @@ export default function FraudAlertsPage() {
                           )}
                           {alert.metadata.txn_count_in_window != null && (
                             <p className="text-sm text-dark-grey">
-                              {alert.metadata.txn_count_in_window as number} transactions en{' '}
+                              {alert.metadata.txn_count_in_window as number} transactions in{' '}
                               {alert.metadata.window_minutes as number} min
                             </p>
                           )}
@@ -101,19 +101,19 @@ export default function FraudAlertsPage() {
                           onClick={() => setExpanded(isExpanded ? null : alert.alert_id)}
                           className="text-teal text-xs hover:underline flex-shrink-0"
                         >
-                          {isExpanded ? 'Masquer' : 'Détails'}
+                          {isExpanded ? 'Hide' : 'Details'}
                         </button>
                       </div>
                     </div>
 
                     {isExpanded && (
                       <div className="mt-3 bg-navy/5 rounded-lg p-3">
-                        <p className="text-xs font-mono text-mid-grey mb-1">Métadonnées</p>
+                        <p className="text-xs font-mono text-mid-grey mb-1">Metadata</p>
                         <pre className="text-xs text-dark-grey overflow-x-auto">
                           {JSON.stringify(alert.metadata, null, 2)}
                         </pre>
                         <p className="text-xs text-mid-grey mt-2">
-                          ID alerte: <span className="font-mono">{alert.alert_id}</span>
+                          Alert ID: <span className="font-mono">{alert.alert_id}</span>
                         </p>
                         {alert.entity_id && (
                           <p className="text-xs text-mid-grey">

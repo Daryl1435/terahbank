@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getUser, updateUserStatus } from '@/lib/api';
 import { canMutate } from '@/lib/auth';
@@ -12,13 +12,12 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   standard:     'Standard',
-  project:      'Projet (Vault)',
-  term_deposit: 'Dépôt à terme',
+  project:      'Project (Vault)',
+  term_deposit: 'Term Deposit',
 };
 
 export default function UserDetailPage() {
   const params      = useParams<{ id: string }>();
-  const router      = useRouter();
   const queryClient = useQueryClient();
   const userId      = params.id;
 
@@ -50,22 +49,22 @@ export default function UserDetailPage() {
   if (isError || !data?.data) {
     return (
       <div className="p-8">
-        <p className="text-error">Utilisateur introuvable.</p>
+        <p className="text-error">User not found.</p>
         <Link href="/users" className="text-teal text-sm mt-2 inline-block hover:underline">
-          ← Retour à la liste
+          ← Back to users
         </Link>
       </div>
     );
   }
 
-  const user    = data.data;
+  const user         = data.data;
   const mutateAllowed = canMutate();
 
   return (
     <div className="p-8 max-w-4xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-mid-grey mb-6">
-        <Link href="/users" className="hover:text-teal transition-colors">Utilisateurs</Link>
+        <Link href="/users" className="hover:text-teal transition-colors">Users</Link>
         <span>›</span>
         <span className="text-dark-grey">{user.full_name}</span>
       </div>
@@ -84,22 +83,22 @@ export default function UserDetailPage() {
 
       {/* User info card */}
       <div className="bg-white rounded-xl shadow-card p-6 mb-6">
-        <h2 className="font-poppins font-semibold text-base text-navy mb-4">Informations personnelles</h2>
+        <h2 className="font-poppins font-semibold text-base text-navy mb-4">Personal information</h2>
         <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
           <div>
-            <dt className="text-mid-grey">E-mail</dt>
+            <dt className="text-mid-grey">Email</dt>
             <dd className="text-dark-grey font-medium">{user.email}</dd>
           </div>
           <div>
-            <dt className="text-mid-grey">Téléphone</dt>
+            <dt className="text-mid-grey">Phone</dt>
             <dd className="text-dark-grey font-medium font-mono">{maskPhone(user.phone_number)}</dd>
           </div>
           <div>
-            <dt className="text-mid-grey">Langue préférée</dt>
+            <dt className="text-mid-grey">Preferred language</dt>
             <dd className="text-dark-grey font-medium uppercase">{user.preferred_language}</dd>
           </div>
           <div>
-            <dt className="text-mid-grey">Inscrit le</dt>
+            <dt className="text-mid-grey">Joined</dt>
             <dd className="text-dark-grey font-medium">{formatDate(user.created_at)}</dd>
           </div>
         </dl>
@@ -108,19 +107,19 @@ export default function UserDetailPage() {
       {/* Accounts */}
       <div className="bg-white rounded-xl shadow-card p-6 mb-6">
         <h2 className="font-poppins font-semibold text-base text-navy mb-4">
-          Comptes ({user.accounts.length})
+          Accounts ({user.accounts.length})
         </h2>
         {user.accounts.length === 0 ? (
-          <p className="text-mid-grey text-sm">Aucun compte ouvert.</p>
+          <p className="text-mid-grey text-sm">No accounts opened.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm admin-table">
               <thead>
                 <tr>
                   <th className="text-left px-3 py-2">Type</th>
-                  <th className="text-left px-3 py-2">Numéro</th>
-                  <th className="text-right px-3 py-2">Solde</th>
-                  <th className="text-left px-3 py-2">Statut</th>
+                  <th className="text-left px-3 py-2">Number</th>
+                  <th className="text-right px-3 py-2">Balance</th>
+                  <th className="text-left px-3 py-2">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,19 +144,19 @@ export default function UserDetailPage() {
       {/* Status management */}
       {mutateAllowed && (
         <div className="bg-white rounded-xl shadow-card p-6">
-          <h2 className="font-poppins font-semibold text-base text-navy mb-4">Gestion du compte</h2>
+          <h2 className="font-poppins font-semibold text-base text-navy mb-4">Account management</h2>
 
           {mutation.isError && (
             <p className="text-error text-sm mb-3">
-              {(mutation.error as Error)?.message ?? 'Erreur lors de la mise à jour.'}
+              {(mutation.error as Error)?.message ?? 'Failed to update account.'}
             </p>
           )}
 
           {confirmAction ? (
             <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
               <p className="text-sm text-dark-grey mb-4">
-                Confirmer l&apos;action : <strong>{confirmAction}</strong> pour{' '}
-                <strong>{user.full_name}</strong> ?
+                Confirm action: <strong>{confirmAction}</strong> for{' '}
+                <strong>{user.full_name}</strong>?
               </p>
               <div className="flex gap-3">
                 <button
@@ -166,13 +165,13 @@ export default function UserDetailPage() {
                   className="px-4 py-2 bg-navy text-white rounded-lg text-sm font-medium hover:bg-dark-navy transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {mutation.isPending && <LoadingSpinner />}
-                  Confirmer
+                  Confirm
                 </button>
                 <button
                   onClick={() => setConfirmAction(null)}
                   className="px-4 py-2 border border-light-grey rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
                 >
-                  Annuler
+                  Cancel
                 </button>
               </div>
             </div>
@@ -183,7 +182,7 @@ export default function UserDetailPage() {
                   onClick={() => setConfirmAction('active')}
                   className="px-4 py-2 bg-success text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Réactiver le compte
+                  Reactivate account
                 </button>
               )}
               {user.account_status !== 'suspended' && (
@@ -191,7 +190,7 @@ export default function UserDetailPage() {
                   onClick={() => setConfirmAction('suspended')}
                   className="px-4 py-2 bg-warning text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Suspendre
+                  Suspend
                 </button>
               )}
               {user.account_status !== 'closed' && (
@@ -199,7 +198,7 @@ export default function UserDetailPage() {
                   onClick={() => setConfirmAction('closed')}
                   className="px-4 py-2 bg-error text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Clôturer le compte
+                  Close account
                 </button>
               )}
             </div>

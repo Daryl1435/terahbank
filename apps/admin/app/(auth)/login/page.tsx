@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { Metadata } from 'next';
 import { adminLogin } from '@/lib/api';
 import { saveAuth } from '@/lib/auth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
-export default function LoginPage() {
+function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
@@ -18,7 +17,6 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
 
-  // Stored temporarily between step 1 and step 2
   const [pendingToken, setPendingToken] = useState<{ token: string; role: string } | null>(null);
 
   async function handleCredentials(e: React.FormEvent) {
@@ -27,17 +25,13 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await adminLogin(email, password);
-      if (!res.success) throw new Error('Échec de la connexion.');
+      if (!res.success) throw new Error('Login failed.');
 
       const { access_token, role } = res.data;
       setPendingToken({ token: access_token, role });
-
-      // TODO: when backend adds TOTP verification (/admin/auth/totp/verify),
-      // check if totp_required is returned and conditionally advance to TOTP step.
-      // For now, TOTP step is always shown — admins without TOTP enrolled skip with "000000".
       setStep('totp');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erreur de connexion.');
+      setError(err instanceof Error ? err.message : 'Connection error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -48,14 +42,10 @@ export default function LoginPage() {
     if (!pendingToken) return;
     setError(null);
 
-    // Validate: must be exactly 6 digits
     if (!/^\d{6}$/.test(totp)) {
-      setError('Le code TOTP doit comporter 6 chiffres.');
+      setError('TOTP code must be exactly 6 digits.');
       return;
     }
-
-    // TODO: POST /admin/auth/totp/verify with { totp_code: totp, session_token: pendingToken.token }
-    // once the backend endpoint is implemented. For now, accept any valid 6-digit code.
 
     setLoading(true);
     try {
@@ -72,17 +62,19 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-teal mb-4">
-            <span className="font-poppins font-bold text-white text-2xl">T</span>
-          </div>
-          <h1 className="font-poppins font-semibold text-white text-2xl">TerahBank</h1>
-          <p className="text-mid-grey text-sm mt-1">Panneau d&apos;administration</p>
+          <img
+            src="/logo-symbol.svg"
+            alt="TerahBank"
+            className="h-16 mx-auto mb-3"
+          />
+          <p className="font-poppins font-semibold text-white text-xl">TerahBank</p>
+          <p className="text-mid-grey text-sm mt-1">Admin Panel</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-modal p-8">
           {step === 'credentials' ? (
             <>
-              <h2 className="font-poppins font-semibold text-navy text-lg mb-6">Connexion</h2>
+              <h2 className="font-poppins font-semibold text-navy text-lg mb-6">Sign In</h2>
 
               {error && (
                 <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm">
@@ -93,7 +85,7 @@ export default function LoginPage() {
               <form onSubmit={handleCredentials} noValidate>
                 <div className="mb-4">
                   <label htmlFor="email" className="block text-sm font-medium text-dark-grey mb-1">
-                    Adresse e-mail
+                    Email address
                   </label>
                   <input
                     id="email"
@@ -109,7 +101,7 @@ export default function LoginPage() {
 
                 <div className="mb-6">
                   <label htmlFor="password" className="block text-sm font-medium text-dark-grey mb-1">
-                    Mot de passe
+                    Password
                   </label>
                   <input
                     id="password"
@@ -129,7 +121,7 @@ export default function LoginPage() {
                   className="w-full bg-teal text-white py-2.5 rounded-lg font-poppins font-semibold text-sm hover:bg-teal-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? <LoadingSpinner /> : null}
-                  Continuer
+                  Continue
                 </button>
               </form>
             </>
@@ -139,14 +131,18 @@ export default function LoginPage() {
                 onClick={() => { setStep('credentials'); setError(null); setTotp(''); }}
                 className="text-mid-grey text-sm mb-4 hover:text-teal transition-colors flex items-center gap-1"
               >
-                ← Retour
+                ← Back
               </button>
 
               <h2 className="font-poppins font-semibold text-navy text-lg mb-2">
-                Vérification TOTP
+                Two-Factor Verification
               </h2>
-              <p className="text-mid-grey text-sm mb-6">
-                Entrez le code à 6 chiffres de votre application d&apos;authentification.
+              <p className="text-mid-grey text-sm mb-3">
+                Enter the 6-digit code from your authenticator app.
+              </p>
+              <p className="text-xs text-teal bg-teal/10 border border-teal/20 rounded-lg px-3 py-2 mb-5">
+                Dev mode: TOTP not yet enforced — enter any 6 digits (e.g.{' '}
+                <strong>000000</strong>).
               </p>
 
               {error && (
@@ -158,7 +154,7 @@ export default function LoginPage() {
               <form onSubmit={handleTotp} noValidate>
                 <div className="mb-6">
                   <label htmlFor="totp" className="block text-sm font-medium text-dark-grey mb-1">
-                    Code d&apos;authentification
+                    Authenticator code
                   </label>
                   <input
                     id="totp"
@@ -167,6 +163,7 @@ export default function LoginPage() {
                     autoComplete="one-time-code"
                     maxLength={6}
                     required
+                    autoFocus
                     value={totp}
                     onChange={(e) => setTotp(e.target.value.replace(/\D/g, ''))}
                     className="w-full px-3 py-2 border border-light-grey rounded-lg text-sm text-center tracking-widest font-poppins focus:outline-none focus:border-teal transition-colors"
@@ -180,7 +177,7 @@ export default function LoginPage() {
                   className="w-full bg-teal text-white py-2.5 rounded-lg font-poppins font-semibold text-sm hover:bg-teal-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? <LoadingSpinner /> : null}
-                  Connexion
+                  Sign In
                 </button>
               </form>
             </>
@@ -188,9 +185,17 @@ export default function LoginPage() {
         </div>
 
         <p className="text-mid-grey text-xs text-center mt-6">
-          Accès réservé au personnel TerahBank autorisé uniquement.
+          Access restricted to authorized TerahBank personnel only.
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

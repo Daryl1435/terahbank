@@ -8,14 +8,12 @@ import { isSuperAdmin } from '@/lib/auth';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import type { ConfigItem } from '@/lib/types';
 
-/** Config keys that contain numeric rates — validated as float between 0 and 1. */
 const RATE_KEYS = new Set([
   'penalty_rate_project',
   'term_deposit_interest_rate',
   'early_break_penalty_rate',
 ]);
 
-/** Config keys that contain integer amounts. */
 const AMOUNT_KEYS = new Set([
   'standard_min_balance',
   'standard_min_initial_deposit',
@@ -24,14 +22,14 @@ const AMOUNT_KEYS = new Set([
 ]);
 
 function validateConfigValue(key: string, value: string): string | null {
-  if (!value.trim()) return 'La valeur est obligatoire.';
+  if (!value.trim()) return 'Value is required.';
   if (RATE_KEYS.has(key)) {
     const n = parseFloat(value);
-    if (isNaN(n) || n < 0 || n > 1) return 'Taux invalide. Doit être un décimal entre 0 et 1 (ex: 0.015).';
+    if (isNaN(n) || n < 0 || n > 1) return 'Invalid rate. Must be a decimal between 0 and 1 (e.g. 0.015).';
   }
   if (AMOUNT_KEYS.has(key)) {
     const n = parseInt(value, 10);
-    if (isNaN(n) || n < 0) return 'Montant invalide. Doit être un entier positif.';
+    if (isNaN(n) || n < 0) return 'Invalid amount. Must be a positive integer.';
   }
   return null;
 }
@@ -100,13 +98,13 @@ function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
                 className="px-3 py-1 bg-teal text-white rounded text-xs font-medium hover:bg-teal-dark transition-colors disabled:opacity-50 flex items-center gap-1"
               >
                 {mutation.isPending && <LoadingSpinner />}
-                Sauvegarder
+                Save
               </button>
               <button
                 onClick={handleCancel}
                 className="px-3 py-1 border border-light-grey rounded text-xs text-dark-grey hover:bg-light-grey transition-colors"
               >
-                Annuler
+                Cancel
               </button>
             </div>
           ) : (
@@ -114,7 +112,7 @@ function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
               onClick={() => setEditing(true)}
               className="px-3 py-1 border border-light-grey rounded text-xs text-teal hover:bg-light-grey transition-colors"
             >
-              Modifier
+              Edit
             </button>
           )
         )}
@@ -136,17 +134,17 @@ export default function ConfigPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">Configuration système</h1>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">System Configuration</h1>
         <p className="text-mid-grey text-sm mt-1">
           {canEdit
-            ? 'Paramètres modifiables — taux, limites et seuils opérationnels.'
-            : 'Lecture seule — seul un Super Admin peut modifier la configuration.'}
+            ? 'Editable settings — rates, limits and operational thresholds.'
+            : 'Read-only — only a Super Admin can modify configuration.'}
         </p>
       </div>
 
       {!canEdit && (
         <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning/30 text-sm text-dark-grey">
-          ⚠ Accès restreint : la modification de la configuration est réservée aux Super Admins.
+          ⚠ Restricted access: configuration changes are reserved for Super Admins.
         </div>
       )}
 
@@ -154,17 +152,17 @@ export default function ConfigPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><LoadingSpinner className="w-8 h-8" /></div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Erreur de chargement.</p>
+          <p className="text-error text-sm text-center py-16">Failed to load configuration.</p>
         ) : configs.length === 0 ? (
-          <p className="text-mid-grey text-sm text-center py-16">Aucune configuration trouvée.</p>
+          <p className="text-mid-grey text-sm text-center py-16">No configuration entries found.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm admin-table">
               <thead>
                 <tr>
-                  <th className="text-left px-4 py-3">Clé</th>
-                  <th className="text-left px-4 py-3">Valeur</th>
-                  <th className="text-left px-4 py-3">Modifié le</th>
+                  <th className="text-left px-4 py-3">Key</th>
+                  <th className="text-left px-4 py-3">Value</th>
+                  <th className="text-left px-4 py-3">Last updated</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>

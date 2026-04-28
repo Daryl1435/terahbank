@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { subDays, formatISO } from 'date-fns';
-import type { Metadata } from 'next';
 import { getKYCQueue, listTransactions, listUsers, getFraudAlerts } from '@/lib/api';
 import { formatXAF } from '@/lib/format';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -54,7 +53,6 @@ export default function DashboardPage() {
     queryFn: () => getFraudAlerts({ limit: 1 }),
   });
 
-  // Sum of all transaction amounts for the monthly volume KPI
   const { data: txnVolumeData, isLoading: loadingVolume } = useQuery({
     queryKey: ['admin', 'transactions', 'volume', thirtyDaysAgo],
     queryFn:  () => listTransactions({ date_from: thirtyDaysAgo, status: 'success', limit: 500 }),
@@ -65,37 +63,37 @@ export default function DashboardPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">Tableau de bord</h1>
-        <p className="text-mid-grey text-sm mt-1">Vue d&apos;ensemble des indicateurs clés</p>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">Dashboard</h1>
+        <p className="text-mid-grey text-sm mt-1">Key performance indicators overview</p>
       </div>
 
       {/* KPI grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
         <KPICard
-          label="Total utilisateurs"
+          label="Total Users"
           value={usersData?.data.total ?? '—'}
-          subtext="Comptes enregistrés"
+          subtext="Registered accounts"
           accent="border-teal"
           loading={loadingUsers}
         />
         <KPICard
-          label="KYC en attente"
+          label="Pending KYC"
           value={kycData?.data.total ?? '—'}
-          subtext="Documents à vérifier"
+          subtext="Documents to review"
           accent="border-warning"
           loading={loadingKyc}
         />
         <KPICard
-          label="Transactions (30j)"
+          label="Transactions (30d)"
           value={txnData?.data.total ?? '—'}
-          subtext="Toutes transactions"
+          subtext="All transactions"
           accent="border-success"
           loading={loadingTxn}
         />
         <KPICard
-          label="Alertes fraude"
+          label="Fraud Alerts"
           value={fraudData?.data.total ?? '—'}
-          subtext="Total enregistrées"
+          subtext="Total recorded"
           accent="border-error"
           loading={loadingFraud}
         />
@@ -104,7 +102,7 @@ export default function DashboardPage() {
       {/* Volume card */}
       <div className="bg-navy rounded-xl p-6 shadow-card mb-10 max-w-sm">
         <p className="text-xs font-roboto text-white/60 uppercase tracking-wide mb-2">
-          Volume mensuel (succès)
+          Monthly volume (successful)
         </p>
         {loadingVolume ? (
           <LoadingSpinner className="mt-2" />
@@ -113,19 +111,19 @@ export default function DashboardPage() {
             {formatXAF(monthlyVolume)}
           </p>
         )}
-        <p className="text-white/50 text-xs mt-1">Transactions validées — 30 derniers jours</p>
+        <p className="text-white/50 text-xs mt-1">Settled transactions — last 30 days</p>
       </div>
 
       {/* Quick links */}
       <div>
-        <h2 className="font-poppins font-semibold text-lg text-navy mb-4">Accès rapide</h2>
+        <h2 className="font-poppins font-semibold text-lg text-navy mb-4">Quick access</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
-            { href: '/kyc',          icon: '📋', label: 'File KYC' },
+            { href: '/kyc',          icon: '📋', label: 'KYC Queue' },
             { href: '/transactions', icon: '↔',  label: 'Transactions' },
-            { href: '/users',        icon: '👥', label: 'Utilisateurs' },
-            { href: '/fraud-alerts', icon: '⚠',  label: 'Alertes fraude' },
-            { href: '/reports',      icon: '📊', label: 'Rapports' },
+            { href: '/users',        icon: '👥', label: 'Users' },
+            { href: '/fraud-alerts', icon: '⚠',  label: 'Fraud Alerts' },
+            { href: '/reports',      icon: '📊', label: 'Reports' },
           ].map((link) => (
             <a
               key={link.href}

@@ -17,42 +17,36 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute(
-        "CREATE TYPE admin_role_enum AS ENUM ('super_admin', 'operations_staff', 'read_only_analyst')"
-    )
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE admin_role_enum AS ENUM (
+                'super_admin', 'operations_staff', 'read_only_analyst'
+            );
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
 
-    op.create_table(
-        "admin_users",
-        sa.Column("id", UUID(as_uuid=True), primary_key=True),
-        sa.Column("email", sa.String(255), nullable=False, unique=True),
-        sa.Column("full_name", sa.String(255), nullable=False),
-        sa.Column("password_hash", sa.String(255), nullable=False),
-        sa.Column(
-            "role",
-            sa.Enum("super_admin", "operations_staff", "read_only_analyst", name="admin_role_enum"),
-            nullable=False,
-        ),
-        sa.Column("totp_secret", sa.String(64), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
-        sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.text("NOW()"),
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.text("NOW()"),
-        ),
-    )
+        CREATE TABLE IF NOT EXISTS admin_users (
+            id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            email       VARCHAR(255) NOT NULL,
+            full_name   VARCHAR(255) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            role        admin_role_enum NOT NULL,
+            totp_secret VARCHAR(64),
+            is_active   BOOLEAN NOT NULL DEFAULT true,
+            last_login_at TIMESTAMPTZ,
+            created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            CONSTRAINT uq_admin_users_email UNIQUE (email)
+        );
 
-    op.create_index("ix_admin_users_email", "admin_users", ["email"], unique=True)
+        CREATE UNIQUE INDEX IF NOT EXISTS ix_admin_users_email ON admin_users (email);
+    """)
 
 
 def downgrade() -> None:
-    op.drop_index("ix_admin_users_email", table_name="admin_users")
-    op.drop_table("admin_users")
-    op.execute("DROP TYPE admin_role_enum")
+    op.execute("""
+        DROP INDEX IF EXISTS ix_admin_users_email;
+        DROP TABLE IF EXISTS admin_users;
+        DROP TYPE IF EXISTS admin_role_enum;
+    """)

@@ -11,12 +11,12 @@ import type { KYCQueueItem } from '@/lib/types';
 const PAGE_SIZE = 20;
 
 const REJECTION_REASONS = [
-  'Document illisible ou de mauvaise qualité',
-  'Document expiré',
-  'Nom ne correspond pas au compte',
-  'Document non accepté (type invalide)',
-  'Suspicion de falsification',
-  'Autre (voir commentaire)',
+  'Document unreadable or poor quality',
+  'Document expired',
+  'Name does not match account',
+  'Document type not accepted',
+  'Suspected forgery',
+  'Other (see comment)',
 ];
 
 function KYCRow({
@@ -45,13 +45,13 @@ function KYCRow({
             onClick={() => onApprove(item.user_id)}
             className="px-3 py-1 bg-success text-white rounded text-xs font-medium hover:opacity-90 transition-opacity"
           >
-            Approuver
+            Approve
           </button>
           <button
             onClick={() => onReject(item.user_id)}
             className="px-3 py-1 bg-error text-white rounded text-xs font-medium hover:opacity-90 transition-opacity"
           >
-            Rejeter
+            Reject
           </button>
         </div>
       </td>
@@ -70,7 +70,7 @@ export default function KYCQueuePage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'kyc', 'queue', offset],
     queryFn:  () => getKYCQueue({ offset, limit: PAGE_SIZE }),
-    refetchInterval: 30_000, // auto-refresh every 30s
+    refetchInterval: 30_000,
   });
 
   const mutation = useMutation({
@@ -96,9 +96,9 @@ export default function KYCQueuePage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">File KYC</h1>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">KYC Queue</h1>
         <p className="text-mid-grey text-sm mt-1">
-          {total} document{total !== 1 ? 's' : ''} en attente de vérification
+          {total} document{total !== 1 ? 's' : ''} pending review
         </p>
       </div>
 
@@ -106,9 +106,9 @@ export default function KYCQueuePage() {
       {approveUserId && (
         <div className="fixed inset-0 bg-navy/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-modal p-6 max-w-sm w-full">
-            <h3 className="font-poppins font-semibold text-navy text-lg mb-2">Approuver le KYC</h3>
+            <h3 className="font-poppins font-semibold text-navy text-lg mb-2">Approve KYC</h3>
             <p className="text-sm text-dark-grey mb-6">
-              Confirmer l&apos;approbation du document KYC pour cet utilisateur ?
+              Confirm approval of this user&apos;s KYC document?
             </p>
             {mutation.isError && (
               <p className="text-error text-sm mb-4">{(mutation.error as Error)?.message}</p>
@@ -120,13 +120,13 @@ export default function KYCQueuePage() {
                 className="flex-1 bg-success text-white py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {mutation.isPending && <LoadingSpinner />}
-                Confirmer
+                Confirm
               </button>
               <button
                 onClick={() => setApproveUserId(null)}
                 className="flex-1 border border-light-grey py-2.5 rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
               >
-                Annuler
+                Cancel
               </button>
             </div>
           </div>
@@ -137,9 +137,9 @@ export default function KYCQueuePage() {
       {rejectUserId && (
         <div className="fixed inset-0 bg-navy/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-modal p-6 max-w-sm w-full">
-            <h3 className="font-poppins font-semibold text-navy text-lg mb-2">Rejeter le KYC</h3>
+            <h3 className="font-poppins font-semibold text-navy text-lg mb-2">Reject KYC</h3>
             <p className="text-sm text-dark-grey mb-4">
-              Sélectionnez le motif de rejet. Il sera communiqué à l&apos;utilisateur.
+              Select a rejection reason. It will be communicated to the user.
             </p>
             <select
               value={rejectionReason}
@@ -166,13 +166,13 @@ export default function KYCQueuePage() {
                 className="flex-1 bg-error text-white py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {mutation.isPending && <LoadingSpinner />}
-                Rejeter
+                Reject
               </button>
               <button
                 onClick={() => setRejectUserId(null)}
                 className="flex-1 border border-light-grey py-2.5 rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
               >
-                Annuler
+                Cancel
               </button>
             </div>
           </div>
@@ -184,12 +184,12 @@ export default function KYCQueuePage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><LoadingSpinner className="w-8 h-8" /></div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Erreur de chargement.</p>
+          <p className="text-error text-sm text-center py-16">Failed to load queue.</p>
         ) : items.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-3xl mb-3">✅</p>
-            <p className="font-poppins font-semibold text-navy">File vide</p>
-            <p className="text-mid-grey text-sm mt-1">Tous les documents ont été traités.</p>
+            <p className="font-poppins font-semibold text-navy">Queue empty</p>
+            <p className="text-mid-grey text-sm mt-1">All documents have been processed.</p>
           </div>
         ) : (
           <>
@@ -197,11 +197,11 @@ export default function KYCQueuePage() {
               <table className="w-full text-sm admin-table">
                 <thead>
                   <tr>
-                    <th className="text-left px-4 py-3">Nom</th>
-                    <th className="text-left px-4 py-3">E-mail</th>
-                    <th className="text-left px-4 py-3">Téléphone</th>
+                    <th className="text-left px-4 py-3">Name</th>
+                    <th className="text-left px-4 py-3">Email</th>
+                    <th className="text-left px-4 py-3">Phone</th>
                     <th className="text-left px-4 py-3">Document</th>
-                    <th className="text-left px-4 py-3">Soumis le</th>
+                    <th className="text-left px-4 py-3">Submitted</th>
                     <th className="px-4 py-3">Actions</th>
                   </tr>
                 </thead>

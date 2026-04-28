@@ -27,9 +27,9 @@ export default function ReportsPage() {
   return (
     <div className="p-8">
       <div className="mb-8">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">Rapports</h1>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">Reports</h1>
         <p className="text-mid-grey text-sm mt-1">
-          Exporter les données en CSV. Maximum 100 000 lignes par export.
+          Export data as CSV. Maximum 100,000 rows per export.
         </p>
       </div>
 
@@ -40,14 +40,14 @@ export default function ReportsPage() {
             <span className="text-3xl">↔</span>
             <div>
               <h2 className="font-poppins font-semibold text-lg text-navy">Transactions</h2>
-              <p className="text-mid-grey text-sm">Export CSV de toutes les transactions</p>
+              <p className="text-mid-grey text-sm">CSV export of all transactions</p>
             </div>
           </div>
 
           <div className="space-y-3 mb-5">
             <div>
               <label className="block text-xs font-medium text-dark-grey mb-1">
-                Date de début (optionnel)
+                Start date (optional)
               </label>
               <input
                 type="date"
@@ -58,7 +58,7 @@ export default function ReportsPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-dark-grey mb-1">
-                Date de fin (optionnel)
+                End date (optional)
               </label>
               <input
                 type="date"
@@ -77,10 +77,10 @@ export default function ReportsPage() {
             {loading === 'transactions' ? (
               <>
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Préparation…
+                Preparing…
               </>
             ) : (
-              '⬇ Télécharger CSV'
+              '⬇ Download CSV'
             )}
           </button>
         </div>
@@ -90,13 +90,13 @@ export default function ReportsPage() {
           <div className="flex items-center gap-3 mb-4">
             <span className="text-3xl">👥</span>
             <div>
-              <h2 className="font-poppins font-semibold text-lg text-navy">Utilisateurs</h2>
-              <p className="text-mid-grey text-sm">Export CSV de tous les comptes utilisateurs</p>
+              <h2 className="font-poppins font-semibold text-lg text-navy">Users</h2>
+              <p className="text-mid-grey text-sm">CSV export of all user accounts</p>
             </div>
           </div>
 
           <div className="bg-off-white rounded-lg p-4 mb-5 text-sm text-dark-grey">
-            <p className="font-medium mb-1">Colonnes exportées :</p>
+            <p className="font-medium mb-1">Exported columns:</p>
             <p className="text-xs text-mid-grey font-mono">
               user_id, full_name, email, phone_number, kyc_status, account_status,
               preferred_language, created_at
@@ -111,10 +111,10 @@ export default function ReportsPage() {
             {loading === 'users' ? (
               <>
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Préparation…
+                Preparing…
               </>
             ) : (
-              '⬇ Télécharger CSV'
+              '⬇ Download CSV'
             )}
           </button>
         </div>
@@ -124,13 +124,13 @@ export default function ReportsPage() {
           <div className="flex items-center gap-3 mb-4">
             <span className="text-3xl">🛡</span>
             <div>
-              <h2 className="font-poppins font-semibold text-lg text-navy">Commissions assurance</h2>
-              <p className="text-mid-grey text-sm">Export CSV des commissions de référencement</p>
+              <h2 className="font-poppins font-semibold text-lg text-navy">Insurance Commissions</h2>
+              <p className="text-mid-grey text-sm">CSV export of referral commissions</p>
             </div>
           </div>
 
           <div className="bg-off-white rounded-lg p-4 mb-5 text-sm text-dark-grey">
-            <p className="font-medium mb-1">Colonnes exportées :</p>
+            <p className="font-medium mb-1">Exported columns:</p>
             <p className="text-xs text-mid-grey font-mono">
               policy_id, user_id, partner_id, policy_type, product_name,
               policy_number, status, start_date, expiry_date, commission_amount_xaf, created_at
@@ -146,10 +146,10 @@ export default function ReportsPage() {
             {loading === 'insurance' ? (
               <>
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Préparation…
+                Preparing…
               </>
             ) : (
-              '⬇ Télécharger CSV'
+              '⬇ Download CSV'
             )}
           </button>
         </div>
@@ -157,9 +157,9 @@ export default function ReportsPage() {
 
       {/* Compliance note */}
       <div className="mt-8 p-4 rounded-xl bg-teal/10 border border-teal/30 text-sm text-dark-grey">
-        <strong>Note COBAC :</strong> Les exports contenant des données personnelles (PII) sont soumis
-        aux obligations de confidentialité. Ne pas partager en dehors des canaux sécurisés TerahBank.
-        Les données sont extraites en temps réel depuis le réplica de lecture.
+        <strong>COBAC Note:</strong> Exports containing personal data (PII) are subject to
+        confidentiality obligations. Do not share outside TerahBank secure channels.
+        Data is extracted in real time from the read replica.
       </div>
     </div>
   );

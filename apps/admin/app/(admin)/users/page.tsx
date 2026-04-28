@@ -11,7 +11,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 
 const PAGE_SIZE = 20;
 
-const KYC_STATUSES    = ['', 'pending', 'approved', 'rejected'];
+const KYC_STATUSES     = ['', 'pending', 'approved', 'rejected'];
 const ACCOUNT_STATUSES = ['', 'active', 'suspended', 'closed'];
 
 export default function UsersPage() {
@@ -20,7 +20,6 @@ export default function UsersPage() {
   const [accountStatus, setAccountStatus] = useState('');
   const [offset,        setOffset]        = useState(0);
 
-  // Debounce search: re-fetch only when user stops typing
   const [debouncedSearch, setDebouncedSearch] = useState('');
   function handleSearchChange(value: string) {
     setSearch(value);
@@ -49,9 +48,9 @@ export default function UsersPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">Utilisateurs</h1>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">Users</h1>
         <p className="text-mid-grey text-sm mt-1">
-          {total > 0 ? `${total} utilisateur${total > 1 ? 's' : ''}` : 'Recherche…'}
+          {total > 0 ? `${total} user${total > 1 ? 's' : ''}` : 'Searching…'}
         </p>
       </div>
 
@@ -59,7 +58,7 @@ export default function UsersPage() {
       <div className="bg-white rounded-xl shadow-card p-4 mb-6 flex flex-wrap gap-3">
         <input
           type="search"
-          placeholder="Rechercher nom, email, téléphone…"
+          placeholder="Search name, email, phone…"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           className="flex-1 min-w-[220px] px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
@@ -69,7 +68,7 @@ export default function UsersPage() {
           onChange={(e) => { setKycStatus(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">Tous KYC</option>
+          <option value="">All KYC</option>
           {KYC_STATUSES.slice(1).map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -79,7 +78,7 @@ export default function UsersPage() {
           onChange={(e) => { setAccountStatus(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">Tous statuts</option>
+          <option value="">All statuses</option>
           {ACCOUNT_STATUSES.slice(1).map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -93,21 +92,21 @@ export default function UsersPage() {
             <LoadingSpinner className="w-8 h-8" />
           </div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Erreur de chargement.</p>
+          <p className="text-error text-sm text-center py-16">Failed to load users.</p>
         ) : users.length === 0 ? (
-          <p className="text-mid-grey text-sm text-center py-16">Aucun utilisateur trouvé.</p>
+          <p className="text-mid-grey text-sm text-center py-16">No users found.</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm admin-table">
                 <thead>
                   <tr>
-                    <th className="text-left px-4 py-3">Nom</th>
-                    <th className="text-left px-4 py-3">E-mail</th>
-                    <th className="text-left px-4 py-3">Téléphone</th>
+                    <th className="text-left px-4 py-3">Name</th>
+                    <th className="text-left px-4 py-3">Email</th>
+                    <th className="text-left px-4 py-3">Phone</th>
                     <th className="text-left px-4 py-3">KYC</th>
-                    <th className="text-left px-4 py-3">Compte</th>
-                    <th className="text-left px-4 py-3">Inscrit le</th>
+                    <th className="text-left px-4 py-3">Account</th>
+                    <th className="text-left px-4 py-3">Joined</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -129,7 +128,7 @@ export default function UsersPage() {
                           href={`/users/${user.user_id}`}
                           className="text-teal text-xs hover:underline font-medium"
                         >
-                          Détail →
+                          Detail →
                         </Link>
                       </td>
                     </tr>
