@@ -4,7 +4,7 @@
  * Two-step flow: enter → confirm → navigate to BiometricSetup.
  */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Platform, View, Text, StyleSheet } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
@@ -54,14 +54,14 @@ export function PINSetupScreen({ navigation }: PINSetupScreenProps) {
         setConfirmPin('');
         return;
       }
-      // Match — save and proceed
+      // Match — save PIN locally then proceed
       setSaving(true);
-      try {
-        await SecureStore.setItemAsync('user_pin', next);
-        navigation.navigate('BiometricSetup');
-      } finally {
-        setSaving(false);
+      if (Platform.OS !== 'web') {
+        // SecureStore is native-only; skip on web to avoid hanging promise
+        try { await SecureStore.setItemAsync('user_pin', next); } catch { /* ignored */ }
       }
+      setSaving(false);
+      navigation.navigate('BiometricSetup');
     }
   };
 

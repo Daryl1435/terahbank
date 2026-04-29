@@ -26,11 +26,15 @@ export function BiometricSetupScreen({ navigation }: BiometricSetupScreenProps) 
 
   useEffect(() => {
     (async () => {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      if (!hasHardware) { setAvailability('no_hardware'); return; }
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      if (!isEnrolled) { setAvailability('not_enrolled'); return; }
-      setAvailability('available');
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        if (!hasHardware) { setAvailability('no_hardware'); return; }
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        setAvailability(isEnrolled ? 'available' : 'not_enrolled');
+      } catch {
+        // expo-local-authentication not supported on this platform (e.g. web)
+        setAvailability('no_hardware');
+      }
     })();
   }, []);
 
@@ -45,6 +49,8 @@ export function BiometricSetupScreen({ navigation }: BiometricSetupScreenProps) 
       if (result.success) {
         await SecureStore.setItemAsync('biometric_enabled', '1');
       }
+    } catch {
+      // Biometric not available on this platform — skip silently
     } finally {
       setLoading(false);
       navigation.navigate('KYCUpload');

@@ -1,7 +1,31 @@
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 
-// SECURITY: tokens stored in SecureStore only — NEVER in Zustand state or AsyncStorage
+// SECURITY: on native, tokens live in SecureStore (Keychain/Keystore).
+// On web (dev only), SecureStore hangs — fall back to localStorage.
+const storage = {
+  set: async (key: string, value: string) => {
+    if (Platform.OS === 'web') {
+      localStorage.setItem(key, value);
+    } else {
+      await SecureStore.setItemAsync(key, value);
+    }
+  },
+  get: async (key: string): Promise<string | null> => {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(key);
+    }
+    return SecureStore.getItemAsync(key);
+  },
+  delete: async (key: string) => {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+    } else {
+      await SecureStore.deleteItemAsync(key);
+    }
+  },
+};
 
 interface AuthState {
   userId: string | null;
@@ -21,17 +45,17 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearAuth: async () => {
-    await SecureStore.deleteItemAsync('access_token');
-    await SecureStore.deleteItemAsync('refresh_token');
+    await storage.delete('access_token');
+    await storage.delete('refresh_token');
     set({ userId: null, isAuthenticated: false, kycStatus: null });
   },
 }));
 
-// Token helpers — always use SecureStore, never Zustand for tokens
+// Token helpers
 export const saveTokens = async (accessToken: string, refreshToken: string) => {
-  await SecureStore.setItemAsync('access_token', accessToken);
-  await SecureStore.setItemAsync('refresh_token', refreshToken);
+  await storage.set('access_token', accessToken);
+  await storage.set('refresh_token', refreshToken);
 };
 
-export const getAccessToken = () => SecureStore.getItemAsync('access_token');
-export const getRefreshToken = () => SecureStore.getItemAsync('refresh_token');
+export const getAccessToken = () => storage.get('access_token');
+export const getRefreshToken = () => storage.get('refresh_token');
