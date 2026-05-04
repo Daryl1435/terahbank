@@ -91,6 +91,11 @@ def mtn_momo_token_key() -> str:
     return "mtn_momo:access_token"
 
 
+def mtn_momo_disbursement_token_key() -> str:
+    """mtn_momo:disbursement_token  — 55-min TTL (5-min buffer before MTN's 1-hour expiry)"""
+    return "mtn_momo:disbursement_token"
+
+
 def orange_money_token_key() -> str:
     """orange_money:access_token  — TTL set dynamically from expires_in - 60s"""
     return "orange_money:access_token"

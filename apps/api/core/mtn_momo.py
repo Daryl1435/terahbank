@@ -25,7 +25,7 @@ import uuid as _uuid
 import httpx
 
 from core.config import settings
-from core.redis import get_redis_client, mtn_momo_token_key
+from core.redis import get_redis_client, mtn_momo_token_key, mtn_momo_disbursement_token_key
 
 logger = logging.getLogger("terahbank.mtn_momo")
 
@@ -133,13 +133,14 @@ class MTNMoMoClient:
             "Content-Type": "application/json",
             "X-Callback-Url": self._callback_url,
         }
+        is_sandbox = self._environment == "sandbox"
         body = {
-            "amount": _amount_xaf(amount_units),
-            "currency": "XAF",
+            "amount": "1" if is_sandbox else _amount_xaf(amount_units),
+            "currency": "EUR" if is_sandbox else "XAF",
             "externalId": our_reference,
             "payer": {
                 "partyIdType": "MSISDN",
-                "partyId": _msisdn(phone_e164),
+                "partyId": "46733123450" if is_sandbox else _msisdn(phone_e164),
             },
             "payerMessage": f"TerahBank deposit - {our_reference}",
             "payeeNote": "TerahBank savings deposit",
@@ -187,3 +188,173 @@ class MTNMoMoClient:
         status = data.get("status", "FAILED")
         logger.info("MTN MoMo status poll: x_ref=%s status=%s", x_reference_id, status)
         return status
+
+    async def get_balance(self) -> dict:
+        """
+        GET /collection/v1_0/account/balance
+
+        Returns dict with keys: availableBalance, currency.
+        """
+        token = await self.get_access_token()
+        url = f"{self._base_url}/collection/v1_0/account/balance"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-Target-Environment": self._environment,
+            "Ocp-Apim-Subscription-Key": self._subscription_key,
+        }
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(url, headers=headers)
+
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"MTN MoMo collection balance failed: HTTP {resp.status_code} — {resp.text[:200]}"
+            )
+        return resp.json()
+
+
+class MTNMoMoDisbursementClient:
+    """
+    Async MTN MoMo Disbursements API client.
+    Handles withdrawals — push funds from merchant wallet to a subscriber's phone.
+    Instantiate per worker call — does not hold state beyond token caching.
+    """
+
+    def __init__(self) -> None:
+        self._base_url = settings.MTN_MOMO_BASE_URL.rstrip("/")
+        self._subscription_key = settings.MTN_MOMO_DISBURSEMENT_SUBSCRIPTION_KEY
+        self._user_id = settings.MTN_MOMO_DISBURSEMENT_USER_ID
+        self._api_key = settings.MTN_MOMO_DISBURSEMENT_API_KEY
+        self._environment = settings.MTN_MOMO_ENVIRONMENT
+        self._callback_url = settings.MTN_MOMO_CALLBACK_URL
+
+    async def get_access_token(self) -> str:
+        """
+        Return a valid Bearer access token for the Disbursements API.
+        Fetched from Redis cache; refreshed on miss via MTN token endpoint.
+        """
+        redis = get_redis_client()
+        cached = await redis.get(mtn_momo_disbursement_token_key())
+        if cached:
+            return cached
+
+        token = await self._fetch_new_token()
+        await redis.setex(mtn_momo_disbursement_token_key(), _TOKEN_TTL_SECONDS, token)
+        return token
+
+    async def _fetch_new_token(self) -> str:
+        """Exchange Disbursements API user ID + key for a Bearer access token."""
+        url = f"{self._base_url}/disbursement/token/"
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                url,
+                auth=(self._user_id, self._api_key),
+                headers={
+                    "Ocp-Apim-Subscription-Key": self._subscription_key,
+                },
+            )
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"MTN MoMo disbursement token fetch failed: HTTP {resp.status_code} — {resp.text[:200]}"
+            )
+        return resp.json()["access_token"]
+
+    async def transfer(
+        self,
+        amount_units: int,
+        phone_e164: str,
+        our_reference: str,
+    ) -> str:
+        """
+        Initiate a Disbursement (withdrawal) — push XAF from merchant wallet to subscriber.
+
+        Returns the X-Reference-Id UUID we generated — store as Transaction.external_reference.
+        Raises RuntimeError on non-202 response.
+        """
+        x_reference_id = str(_uuid.uuid4())
+        token = await self.get_access_token()
+
+        url = f"{self._base_url}/disbursement/v1_0/transfer"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-Reference-Id": x_reference_id,
+            "X-Target-Environment": self._environment,
+            "Ocp-Apim-Subscription-Key": self._subscription_key,
+            "Content-Type": "application/json",
+            "X-Callback-Url": self._callback_url,
+        }
+        is_sandbox = self._environment == "sandbox"
+        body = {
+            "amount": "1" if is_sandbox else _amount_xaf(amount_units),
+            "currency": "EUR" if is_sandbox else "XAF",
+            "externalId": our_reference,
+            "payee": {
+                "partyIdType": "MSISDN",
+                "partyId": "46733123450" if is_sandbox else _msisdn(phone_e164),
+            },
+            "payerMessage": f"TerahBank withdrawal - {our_reference}",
+            "payeeNote": "TerahBank savings withdrawal",
+        }
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(url, json=body, headers=headers)
+
+        if resp.status_code != 202:
+            raise RuntimeError(
+                f"MTN MoMo transfer failed: HTTP {resp.status_code} — {resp.text[:200]}"
+            )
+
+        logger.info(
+            "MTN MoMo disbursement initiated: x_ref=%s our_ref=%s amount_xaf=%s phone=%s",
+            x_reference_id, our_reference, _amount_xaf(amount_units), _msisdn(phone_e164),
+        )
+        return x_reference_id
+
+    async def get_transfer_status(self, x_reference_id: str) -> str:
+        """
+        Poll the status of a previously initiated Transfer.
+
+        Returns one of: "SUCCESSFUL" | "FAILED" | "PENDING".
+        """
+        token = await self.get_access_token()
+        url = f"{self._base_url}/disbursement/v1_0/transfer/{x_reference_id}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-Target-Environment": self._environment,
+            "Ocp-Apim-Subscription-Key": self._subscription_key,
+        }
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(url, headers=headers)
+
+        if resp.status_code != 200:
+            logger.warning(
+                "MTN MoMo disbursement status poll failed: HTTP %d for x_ref=%s",
+                resp.status_code, x_reference_id,
+            )
+            return "FAILED"
+
+        data = resp.json()
+        status = data.get("status", "FAILED")
+        logger.info("MTN MoMo disbursement status poll: x_ref=%s status=%s", x_reference_id, status)
+        return status
+
+    async def get_balance(self) -> dict:
+        """
+        GET /disbursement/v1_0/account/balance
+
+        Returns dict with keys: availableBalance, currency.
+        """
+        token = await self.get_access_token()
+        url = f"{self._base_url}/disbursement/v1_0/account/balance"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-Target-Environment": self._environment,
+            "Ocp-Apim-Subscription-Key": self._subscription_key,
+        }
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(url, headers=headers)
+
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"MTN MoMo disbursement balance failed: HTTP {resp.status_code} — {resp.text[:200]}"
+            )
+        return resp.json()

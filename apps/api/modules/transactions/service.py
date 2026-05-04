@@ -613,14 +613,14 @@ class TransactionService:
         if payload.channel == "mtn_momo":
             await _enqueue_momo_payment_job(
                 txn_id=str(txn.id),
-                phone_e164=user.phone,
+                phone_e164=user.phone_number,
                 amount_units=payload.amount,
                 reference=reference,
             )
         else:  # orange_money
             await _enqueue_orange_payment_job(
                 txn_id=str(txn.id),
-                phone_e164=user.phone,
+                phone_e164=user.phone_number,
                 amount_units=payload.amount,
                 reference=reference,
             )
