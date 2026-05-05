@@ -29,19 +29,21 @@ const storage = {
 
 interface AuthState {
   userId: string | null;
+  fullName: string | null;
   isAuthenticated: boolean;
   kycStatus: 'pending' | 'approved' | 'rejected' | null;
-  setAuth: (userId: string, kycStatus: string) => void;
+  setAuth: (userId: string, kycStatus: string, fullName?: string) => void;
   clearAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   userId: null,
+  fullName: null,
   isAuthenticated: false,
   kycStatus: null,
 
-  setAuth: (userId, kycStatus) => {
-    set({ userId, isAuthenticated: true, kycStatus: kycStatus as AuthState['kycStatus'] });
+  setAuth: (userId, kycStatus, fullName) => {
+    set({ userId, fullName: fullName ?? null, isAuthenticated: true, kycStatus: kycStatus as AuthState['kycStatus'] });
   },
 
   clearAuth: async () => {

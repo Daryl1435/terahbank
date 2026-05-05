@@ -79,7 +79,7 @@ export function OTPScreen({ navigation, route }: OTPScreenProps) {
               });
             } else {
               // Known device: set auth state — App.tsx handles navigation
-              setAuth(data.user_id, data.kyc_status);
+              setAuth(data.user_id, data.kyc_status, data.full_name);
             }
           }
         },

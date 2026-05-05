@@ -51,14 +51,16 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     }
   });
 
+  const fullName = useAuthStore((s) => s.fullName);
+  const firstName = fullName?.split(' ')[0] ?? '';
   const greetingKey = getGreetingKey();
-  const greeting = i18n.t(greetingKey, { name: '' }).replace(', ', '');
+  const greeting = i18n.t(greetingKey, { name: firstName });
 
   return (
     <SafeAreaView style={styles.safe}>
       {/* ── App header (FR-049, FR-050) ─────────────────────────────────────── */}
       <View style={styles.appBar}>
-        <TerahLogo variant="full" width={140} />
+        <TerahLogo variant="full" width={140} onDark />
         <View style={styles.appBarActions}>
           {/* FR-049: Notification bell */}
           <TouchableOpacity

@@ -202,6 +202,7 @@ class AuthService:
                 refresh_token=refresh_token_str,
                 expires_in=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
                 user_id=str(user.id),
+                full_name=user.full_name,
                 kyc_status=user.kyc_status,
                 is_new_device=is_new_device,
             ).model_dump(),

@@ -1,15 +1,5 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  runOnJS,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { colors } from '@/utils/tokens';
 
@@ -22,117 +12,94 @@ const HOLD_MS     = 1800;
 const EXIT_MS     = 480;
 
 export default function AnimatedSplash({ onFinish }: Props) {
-  const reducedMotion = useReducedMotion();
-
-  const shieldScale      = useSharedValue(reducedMotion ? 1 : 0.35);
-  const shieldOpacity    = useSharedValue(0);
-  const wordmarkOpacity  = useSharedValue(0);
-  const wordmarkY        = useSharedValue(reducedMotion ? 0 : 28);
-  const taglineOpacity   = useSharedValue(0);
-  const underlineWidth   = useSharedValue(0);
-  const containerOpacity = useSharedValue(1);
+  const shieldScale      = useRef(new Animated.Value(0.35)).current;
+  const shieldOpacity    = useRef(new Animated.Value(0)).current;
+  const wordmarkOpacity  = useRef(new Animated.Value(0)).current;
+  const wordmarkY        = useRef(new Animated.Value(28)).current;
+  const taglineOpacity   = useRef(new Animated.Value(0)).current;
+  const underlineWidth   = useRef(new Animated.Value(0)).current;
+  const containerOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const dismiss = withDelay(
-      HOLD_MS,
-      withTiming(0, { duration: EXIT_MS }, (finished) => {
-        if (finished) runOnJS(onFinish)();
+    const exitAnim = Animated.sequence([
+      Animated.delay(HOLD_MS),
+      Animated.timing(containerOpacity, {
+        toValue: 0,
+        duration: EXIT_MS,
+        useNativeDriver: true,
       }),
-    );
+    ]);
 
-    if (reducedMotion) {
-      shieldOpacity.value    = 1;
-      wordmarkOpacity.value  = 1;
-      taglineOpacity.value   = 1;
-      underlineWidth.value   = UNDERLINE_W;
-      containerOpacity.value = dismiss;
-      return;
-    }
-
-    // Shield: spring scale + fade
-    shieldScale.value   = withSpring(1, { damping: 11, stiffness: 150 });
-    shieldOpacity.value = withTiming(1, { duration: 420, easing: Easing.out(Easing.quad) });
-
-    // Wordmark: slide up + fade
-    wordmarkOpacity.value = withDelay(260, withTiming(1, { duration: 440 }));
-    wordmarkY.value       = withDelay(260, withTiming(0, {
-      duration: 440,
-      easing: Easing.out(Easing.cubic),
-    }));
-
-    // Tagline: fade
-    taglineOpacity.value = withDelay(520, withTiming(1, { duration: 380 }));
-
-    // Underline: draw left → right via width
-    underlineWidth.value = withDelay(760, withTiming(UNDERLINE_W, {
-      duration: 500,
-      easing: Easing.out(Easing.quad),
-    }));
-
-    // Exit
-    containerOpacity.value = dismiss;
+    Animated.parallel([
+      // Shield: spring scale + fade
+      Animated.spring(shieldScale, {
+        toValue: 1,
+        damping: 11,
+        stiffness: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shieldOpacity, {
+        toValue: 1,
+        duration: 420,
+        useNativeDriver: true,
+      }),
+      // Wordmark: slide up + fade
+      Animated.sequence([
+        Animated.delay(260),
+        Animated.parallel([
+          Animated.timing(wordmarkOpacity, { toValue: 1, duration: 440, useNativeDriver: true }),
+          Animated.timing(wordmarkY, { toValue: 0, duration: 440, useNativeDriver: true }),
+        ]),
+      ]),
+      // Tagline
+      Animated.sequence([
+        Animated.delay(520),
+        Animated.timing(taglineOpacity, { toValue: 1, duration: 380, useNativeDriver: true }),
+      ]),
+      // Underline (useNativeDriver: false — animates width)
+      Animated.sequence([
+        Animated.delay(760),
+        Animated.timing(underlineWidth, {
+          toValue: UNDERLINE_W,
+          duration: 500,
+          useNativeDriver: false,
+        }),
+      ]),
+      // Exit
+      exitAnim,
+    ]).start(({ finished }) => {
+      if (finished) onFinish();
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const shieldStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: shieldScale.value }],
-    opacity:   shieldOpacity.value,
-  }));
-
-  const wordmarkStyle = useAnimatedStyle(() => ({
-    opacity:   wordmarkOpacity.value,
-    transform: [{ translateY: wordmarkY.value }],
-  }));
-
-  const taglineStyle = useAnimatedStyle(() => ({
-    opacity: taglineOpacity.value,
-  }));
-
-  const underlineStyle = useAnimatedStyle(() => ({
-    width: underlineWidth.value,
-  }));
-
-  const rootStyle = useAnimatedStyle(() => ({
-    opacity: containerOpacity.value,
-  }));
-
   return (
-    <Animated.View style={[styles.root, rootStyle]}>
-      {/* Radial glow behind shield */}
+    <Animated.View style={[styles.root, { opacity: containerOpacity }]}>
       <View style={styles.glow} />
 
-      {/* Shield */}
-      <Animated.View style={shieldStyle}>
+      <Animated.View style={{ transform: [{ scale: shieldScale }], opacity: shieldOpacity }}>
         <Svg width={168} height={200} viewBox="10 10 80 108">
-          {/* Shield body — slightly lighter navy so it reads on the background */}
           <Path
             d="M20,18 L70,18 L70,70 C70,95 45,110 45,110 C45,110 20,95 20,70 Z"
             fill="#122C64"
           />
-          {/* Teal accent bar across top */}
           <Rect x="20" y="18" width="50" height="8" rx="2" fill={colors.teal} />
-          {/* T — horizontal bar */}
           <Rect x="33" y="40" width="24" height="5" rx="2" fill="white" />
-          {/* T — vertical stem */}
           <Rect x="43" y="45" width="5" height="30" rx="2" fill="white" />
-          {/* Teal dot at shield base */}
           <Circle cx="45" cy="95" r="4" fill={colors.teal} />
         </Svg>
       </Animated.View>
 
-      {/* TerahBank wordmark */}
-      <Animated.View style={[styles.wordmarkRow, wordmarkStyle]}>
+      <Animated.View style={[styles.wordmarkRow, { opacity: wordmarkOpacity, transform: [{ translateY: wordmarkY }] }]}>
         <Text style={styles.terah}>Terah</Text>
         <Text style={styles.bank}>Bank</Text>
       </Animated.View>
 
-      {/* Tagline */}
-      <Animated.View style={taglineStyle}>
+      <Animated.View style={{ opacity: taglineOpacity }}>
         <Text style={styles.tagline}>SAVE. GROW. THRIVE.</Text>
       </Animated.View>
 
-      {/* Underline — grows left to right */}
       <View style={styles.underlineTrack}>
-        <Animated.View style={[styles.underline, underlineStyle]} />
+        <Animated.View style={[styles.underline, { width: underlineWidth }]} />
       </View>
     </Animated.View>
   );

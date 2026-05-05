@@ -13,6 +13,7 @@ import {
   ScrollView,
   Image,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -111,6 +112,11 @@ export function KYCUploadScreen({ navigation }: KYCUploadScreenProps) {
   };
 
   const handlePickDocument = () => {
+    if (Platform.OS === 'web') {
+      // On web Alert.alert has no button callbacks — go straight to file picker
+      launchGallery();
+      return;
+    }
     Alert.alert(
       i18n.t('auth.kyc_pick_source_title'),
       undefined,
@@ -136,11 +142,19 @@ export function KYCUploadScreen({ navigation }: KYCUploadScreenProps) {
       const token = await getAccessToken();
       const formData = new FormData();
       formData.append('document_type', selectedType);
-      formData.append('file', {
-        uri: file.uri,
-        name: file.name,
-        type: file.mimeType,
-      } as any);
+
+      if (Platform.OS === 'web') {
+        // On web, fetch the blob from the object URL and append as a File
+        const blob = await fetch(file.uri).then((r) => r.blob());
+        const webFile = new File([blob], file.name, { type: file.mimeType });
+        formData.append('file', webFile);
+      } else {
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name,
+          type: file.mimeType,
+        } as any);
+      }
 
       const res = await fetch(
         `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/v1/users/me/kyc`,

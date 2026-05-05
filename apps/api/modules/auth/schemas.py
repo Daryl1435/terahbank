@@ -101,6 +101,7 @@ class AuthTokenResponseData(BaseModel):
     token_type: str = "bearer"
     expires_in: int   # access token lifetime in seconds
     user_id: str
+    full_name: str
     kyc_status: str
     is_new_device: bool = False
 

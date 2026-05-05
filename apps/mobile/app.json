@@ -36,11 +36,8 @@
         }
       ]
     ],
-    "extra": {
-      "eas": {
-        "projectId": "terahbank-project-id"
-      }
-    },
-    "owner": "ibridge-team"
+    "updates": {
+      "enabled": false
+    }
   }
 }

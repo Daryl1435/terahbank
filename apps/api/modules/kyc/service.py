@@ -86,8 +86,14 @@ class KYCService:
         ext = _ALLOWED_CONTENT_TYPES[content_type]
         s3_key = f"kyc/{user.id}/{document_type}/{uuid.uuid4()}{ext}"
 
-        # Upload to S3 (encrypted)
-        await s3_client(key=s3_key, data=data, content_type=content_type)
+        # Upload to S3 (encrypted) — skip silently in local dev if credentials are mock
+        try:
+            await s3_client(key=s3_key, data=data, content_type=content_type)
+        except Exception as exc:
+            if settings.APP_ENV == "development":
+                logger.warning("S3 upload skipped in dev (mock credentials): %s", exc)
+            else:
+                raise
 
         # Persist document record
         doc = await self._repo.create_document(

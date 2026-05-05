@@ -12,9 +12,13 @@ import Svg, { Path, Rect, Circle, Text, TSpan, G } from 'react-native-svg';
 interface TerahLogoProps {
   variant?: 'full' | 'symbol';
   width?: number;
+  onDark?: boolean;
 }
 
-export function TerahLogo({ variant = 'full', width = 180 }: TerahLogoProps) {
+export function TerahLogo({ variant = 'full', width = 180, onDark = false }: TerahLogoProps) {
+  const shieldFill = onDark ? '#FFFFFF' : '#0B1F4A';
+  const wordmarkFill = onDark ? '#FFFFFF' : '#0B1F4A';
+
   if (variant === 'symbol') {
     const height = Math.round(width * 1.1);
     return (
@@ -23,7 +27,7 @@ export function TerahLogo({ variant = 'full', width = 180 }: TerahLogoProps) {
           {/* Shield body */}
           <Path
             d="M10,8 L90,8 L90,62 C90,90 50,106 50,106 C50,106 10,90 10,62 Z"
-            fill="#0B1F4A"
+            fill={shieldFill}
           />
           {/* Teal accent bar at top */}
           <Rect x="10" y="8" width="80" height="11" rx="3" fill="#00B4D8" />
@@ -46,7 +50,7 @@ export function TerahLogo({ variant = 'full', width = 180 }: TerahLogoProps) {
         {/* Shield body */}
         <Path
           d="M20,18 L70,18 L70,70 C70,95 45,110 45,110 C45,110 20,95 20,70 Z"
-          fill="#0B1F4A"
+          fill={shieldFill}
         />
         {/* Teal accent bar on shield top */}
         <Rect x="20" y="18" width="50" height="8" rx="2" fill="#00B4D8" />
@@ -67,7 +71,7 @@ export function TerahLogo({ variant = 'full', width = 180 }: TerahLogoProps) {
         fontSize="44"
         letterSpacing="-1"
       >
-        <TSpan fill="#0B1F4A">Terah</TSpan>
+        <TSpan fill={wordmarkFill}>Terah</TSpan>
         <TSpan fill="#00B4D8">Bank</TSpan>
       </Text>
 

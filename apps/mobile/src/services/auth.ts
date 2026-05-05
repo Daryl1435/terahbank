@@ -61,6 +61,7 @@ export interface AuthTokenResponse {
   token_type: string;
   expires_in: number;
   user_id: string;
+  full_name: string;
   kyc_status: 'pending' | 'approved' | 'rejected';
   is_new_device: boolean;
 }
