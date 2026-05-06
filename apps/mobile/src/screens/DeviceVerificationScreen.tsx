@@ -6,6 +6,7 @@
  */
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../App';
@@ -46,7 +47,8 @@ export function DeviceVerificationScreen({ navigation, route }: DeviceVerificati
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <View style={styles.container}>
       {/* Warning icon */}
       <View style={styles.iconCircle}>
         <Text style={styles.iconText}>!</Text>
@@ -68,7 +70,8 @@ export function DeviceVerificationScreen({ navigation, route }: DeviceVerificati
         variant="ghost"
         style={styles.denyButton}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 

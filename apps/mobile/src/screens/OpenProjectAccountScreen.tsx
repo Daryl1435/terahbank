@@ -16,6 +16,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { useOpenProjectAccount } from '@/hooks/useBalance';
@@ -110,10 +111,11 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
     : null;
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <ScrollView
         style={styles.screen}
         contentContainerStyle={styles.container}
@@ -198,7 +200,8 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
           style={styles.submitButton}
         />
       </ScrollView>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

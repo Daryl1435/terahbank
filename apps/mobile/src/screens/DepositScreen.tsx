@@ -16,9 +16,9 @@ import {
   TextInput,
   StyleSheet,
   ActivityIndicator,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { useDeposit } from '@/hooks/useTransactions';
@@ -92,7 +92,7 @@ export default function DepositScreen({ navigation }: DepositScreenProps) {
         channel: selectedChannel,
       });
       // Card channels: open hosted payment page in WebView
-      if (selectedChannel === 'visa' || selectedChannel === 'mastercard') {
+      if (selectedChannel === 'visa') {
         navigation.replace('CardPaymentWebView', {
           paymentUrl: (txn as any).payment_url ?? '',
           transactionId: (txn as any).transaction_id ?? '',

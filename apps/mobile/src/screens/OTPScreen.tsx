@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../App';
@@ -107,7 +108,8 @@ export function OTPScreen({ navigation, route }: OTPScreenProps) {
   const canResend = countdown === 0 && resendCount < MAX_RESENDS;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <View style={styles.container}>
       <Text style={styles.title}>{i18n.t('auth.otp_title')}</Text>
       <Text style={styles.subtitle}>{i18n.t('auth.otp_subtitle')}</Text>
 
@@ -164,7 +166,8 @@ export function OTPScreen({ navigation, route }: OTPScreenProps) {
         variant="ghost"
         style={styles.backButton}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 

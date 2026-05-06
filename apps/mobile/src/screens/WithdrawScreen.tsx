@@ -17,10 +17,10 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { useWithdraw } from '@/hooks/useTransactions';
@@ -344,9 +344,11 @@ export default function WithdrawScreen({ navigation }: WithdrawScreenProps) {
         {pinError ? <Text style={styles.errorText}>{pinError}</Text> : null}
 
         <PINKeypad
-          pin={pin}
-          onPinChange={setPin}
-          maxLength={6}
+          onKeyPress={(key) => {
+            if (key === 'backspace') setPin((p) => p.slice(0, -1));
+            else if (pin.length < 6) setPin((p) => p + key);
+          }}
+          disabled={pinVerifying || isPending}
         />
 
         <TerahButton

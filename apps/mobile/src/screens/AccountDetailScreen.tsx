@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import type { RootStackParamList } from '../../App';
@@ -70,7 +71,8 @@ export default function AccountDetailScreen({ navigation, route }: AccountDetail
     : null;
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       {/* Back button */}
       <TouchableOpacity
         onPress={() => navigation.goBack()}
@@ -236,7 +238,8 @@ export default function AccountDetailScreen({ navigation, route }: AccountDetail
           />
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

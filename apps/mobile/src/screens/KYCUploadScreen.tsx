@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -179,7 +180,8 @@ export function KYCUploadScreen({ navigation }: KYCUploadScreenProps) {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.title}>{i18n.t('auth.kyc_upload_title')}</Text>
       <Text style={styles.subtitle}>{i18n.t('auth.kyc_upload_subtitle')}</Text>
 
@@ -235,7 +237,8 @@ export function KYCUploadScreen({ navigation }: KYCUploadScreenProps) {
         disabled={!file}
         style={styles.submitButton}
       />
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

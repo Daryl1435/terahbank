@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -67,7 +68,8 @@ export function BiometricSetupScreen({ navigation }: BiometricSetupScreenProps) 
       : null;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <View style={styles.container}>
       {/* Icon placeholder — Phosphor icon would go here */}
       <View style={styles.iconCircle}>
         <Text style={styles.iconText}>🔒</Text>
@@ -97,7 +99,8 @@ export function BiometricSetupScreen({ navigation }: BiometricSetupScreenProps) 
         variant="ghost"
         disabled={loading}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 

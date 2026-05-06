@@ -5,6 +5,7 @@
  */
 import React, { useState } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
@@ -73,7 +74,8 @@ export function PINSetupScreen({ navigation }: PINSetupScreenProps) {
     : i18n.t('auth.pin_confirm_subtitle');
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
 
@@ -100,7 +102,8 @@ export function PINSetupScreen({ navigation }: PINSetupScreenProps) {
         disabled={saving || currentPin.length >= PIN_LENGTH}
         style={styles.keypad}
       />
-    </View>
+      </View>
+    </SafeAreaView>
   );
 }
 

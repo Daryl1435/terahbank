@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { colors } from '@/utils/tokens';
@@ -56,7 +57,8 @@ const ACCOUNT_TYPES: AccountTypeCard[] = [
 
 export default function OpenAccountScreen({ navigation }: OpenAccountScreenProps) {
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.offWhite }} edges={['top', 'bottom']}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       {/* Back */}
       <TouchableOpacity
         onPress={() => navigation.goBack()}
@@ -94,7 +96,8 @@ export default function OpenAccountScreen({ navigation }: OpenAccountScreenProps
           </TouchableOpacity>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
