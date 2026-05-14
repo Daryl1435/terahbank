@@ -106,7 +106,8 @@ class AuthService:
             entity_id=user.id,
         )
 
-        # TODO: dispatch OTP via BullMQ SMS/email job
+        from modules.notifications.service import dispatch_otp_sms
+        await dispatch_otp_sms(user.phone_number, otp)
 
         return TerahResponse(
             success=True,
@@ -304,7 +305,8 @@ class AuthService:
             metadata={"purpose": "login"},
         )
 
-        # TODO: dispatch SMS OTP via BullMQ notification job
+        from modules.notifications.service import dispatch_otp_sms
+        await dispatch_otp_sms(user.phone_number, otp)
 
         return TerahResponse(
             success=True,
@@ -420,7 +422,8 @@ class AuthService:
             metadata={"purpose": payload.purpose, "resend_count": resend_count},
         )
 
-        # TODO: dispatch SMS OTP via BullMQ notification job
+        from modules.notifications.service import dispatch_otp_sms
+        await dispatch_otp_sms(user.phone_number, otp)
 
         return TerahResponse(success=True, message="OTP resent successfully.")
 

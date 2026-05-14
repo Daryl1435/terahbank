@@ -353,6 +353,24 @@
     "load_error": "Impossible de charger la page de paiement. Veuillez réessayer.",
     "no_url": "Lien de paiement introuvable."
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty_title": "Aucune notification",
+    "empty_subtitle": "Vous n'avez aucune notification pour le moment.",
+    "mark_all_read": "Tout marquer comme lu",
+    "preferences_title": "Préférences",
+    "push_enabled": "Notifications push",
+    "email_enabled": "Notifications par email",
+    "sms_enabled": "Notifications SMS",
+    "in_app_enabled": "Notifications in-app",
+    "transaction_alerts": "Alertes de transactions",
+    "security_alerts": "Alertes de sécurité",
+    "monthly_summary": "Résumé mensuel",
+    "milestone_alerts": "Alertes d'objectifs",
+    "maturity_reminders": "Rappels d'échéance",
+    "load_error": "Impossible de charger les notifications.",
+    "mark_read_error": "Erreur lors du marquage."
+  },
   "common": {
     "confirm": "Confirmer",
     "cancel": "Annuler",

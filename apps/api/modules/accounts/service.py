@@ -363,24 +363,10 @@ def _dispatch_milestone_notification(
     account: Account,
     milestone: int,
 ) -> None:
-    """
-    FR-020: Notify user when a project account crosses a progress milestone.
-    Stubs the BullMQ push/email dispatch — implemented in Milestone 6.2.
-    """
     logger.info(
-        "MILESTONE_%d: user=%s account=%s project=%r — TODO Milestone 6.2: enqueue push notification",
+        "MILESTONE_%d: user=%s account=%s project=%r",
         milestone, user_id, account.id, account.project_name,
     )
-    # TODO Milestone 6.2:
-    # await enqueue_notification(queue:notifications, {
-    #     "name": "send_push_notification",
-    #     "data": {
-    #         "user_id": str(user_id),
-    #         "title": f"{milestone}% atteint !",
-    #         "body": f"Votre projet « {account.project_name} » est à {milestone}%.",
-    #         "data": {"type": f"PROJECT_MILESTONE_{milestone}", "account_id": str(account.id)},
-    #     }
-    # })
 
 
 def notify_project_milestones(

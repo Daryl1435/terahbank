@@ -60,6 +60,9 @@ import CardPaymentWebViewScreen from '@/screens/CardPaymentWebViewScreen';
 import InsuranceScreen from '@/screens/InsuranceScreen';
 import InsurancePolicyDetailScreen from '@/screens/InsurancePolicyDetailScreen';
 
+// ── Notifications — Milestone 6.2 ─────────────────────────────────────────────
+import NotificationsScreen from '@/screens/NotificationsScreen';
+
 // ─── Navigation types ─────────────────────────────────────────────────────────
 
 export type RootStackParamList = {
@@ -183,8 +186,8 @@ function AppNavigator() {
           {/* Insurance — Milestone 6.1 */}
           <Stack.Screen name="Insurance"              component={InsuranceScreen} />
           <Stack.Screen name="InsurancePolicyDetail"  component={InsurancePolicyDetailScreen} />
-          {/* Notifications stub — Milestone 6 */}
-          <Stack.Screen name="Notifications"          component={DashboardScreen} />
+          {/* Notifications — Milestone 6.2 */}
+          <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
         </>
       )}
     </Stack.Navigator>

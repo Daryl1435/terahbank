@@ -19,6 +19,7 @@ import { TerahLogo } from '@/components/TerahLogo';
 import { colors } from '@/utils/tokens';
 import { formatXAF } from '@/utils/formatXAF';
 import i18n from '@/locales';
+import { useUnreadCount } from '@/hooks/useNotifications';
 
 type DashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
 
@@ -55,6 +56,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
   const firstName = fullName?.split(' ')[0] ?? '';
   const greetingKey = getGreetingKey();
   const greeting = i18n.t(greetingKey, { name: firstName });
+  const { data: unreadCount } = useUnreadCount();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -62,7 +64,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
       <View style={styles.appBar}>
         <TerahLogo variant="full" width={140} onDark />
         <View style={styles.appBarActions}>
-          {/* FR-049: Notification bell */}
+          {/* FR-049: Notification bell with live unread badge */}
           <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}
             accessibilityRole="button"
@@ -70,7 +72,11 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             style={styles.iconButton}
           >
             <Text style={styles.iconText}>🔔</Text>
-            {/* Unread badge — stub: 0 unread until Milestone 6 */}
+            {unreadCount != null && unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* FR-050: Profile access */}
@@ -220,6 +226,24 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 22,
+  },
+  badge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontFamily: 'Poppins_600SemiBold',
+    lineHeight: 14,
   },
   avatarCircle: {
     width: 36,

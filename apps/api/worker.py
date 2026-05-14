@@ -9,7 +9,8 @@ Usage:
     python worker.py
 
 Queues processed:
-  queue:momo   — MTN MoMo deposit (request-to-pay) + timeout-check jobs
+  queue:momo          — MTN MoMo deposit (request-to-pay) + timeout-check jobs
+  queue:notifications — SMS (Termii), email (SendGrid), push (FCM)
 
 NEVER run inside the API process — this must be a standalone process.
 """
@@ -30,7 +31,8 @@ import modules.admin.models         # noqa: F401
 import modules.insurance.models     # noqa: F401
 
 from core.redis import init_redis
-from modules.jobs.momo_payment_processor import create_worker
+from modules.jobs.momo_payment_processor import create_worker as create_momo_worker
+from modules.jobs.notification_processor import create_notification_worker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,10 +43,11 @@ logger = logging.getLogger("terahbank.worker")
 
 
 async def main() -> None:
-    logger.info("Starting TerahBank MoMo worker (queue:momo) ...")
+    logger.info("Starting TerahBank workers (queue:momo + queue:notifications) ...")
     await init_redis()
-    worker = create_worker()
-    logger.info("Worker ready — waiting for jobs. Press Ctrl+C to stop.")
+    momo_worker = create_momo_worker()
+    notif_worker = create_notification_worker()
+    logger.info("Workers ready — waiting for jobs. Press Ctrl+C to stop.")
 
     loop = asyncio.get_running_loop()
     stop = loop.create_future()
@@ -66,8 +69,9 @@ async def main() -> None:
     except (KeyboardInterrupt, SystemExit):
         pass
     finally:
-        await worker.close()
-        logger.info("Worker stopped.")
+        await momo_worker.close()
+        await notif_worker.close()
+        logger.info("Workers stopped.")
 
 
 if __name__ == "__main__":

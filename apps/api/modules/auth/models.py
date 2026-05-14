@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from core.database import Base
 
 
@@ -21,3 +22,7 @@ class User(Base):
     pin_hash           = Column(String(255), nullable=True)   # bcrypt hash of 4–6 digit PIN (FR-006/036)
     created_at         = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at         = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    notifications            = relationship("Notification", back_populates="user", lazy="noload")
+    notification_preferences = relationship("NotificationPreference", back_populates="user", uselist=False, lazy="noload")
+    device_tokens            = relationship("DeviceToken", back_populates="user", lazy="noload")

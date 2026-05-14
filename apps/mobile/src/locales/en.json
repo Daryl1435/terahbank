@@ -353,6 +353,24 @@
     "load_error": "Could not load the payment page. Please try again.",
     "no_url": "Payment link not found."
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty_title": "No notifications",
+    "empty_subtitle": "You have no notifications at the moment.",
+    "mark_all_read": "Mark all as read",
+    "preferences_title": "Preferences",
+    "push_enabled": "Push notifications",
+    "email_enabled": "Email notifications",
+    "sms_enabled": "SMS notifications",
+    "in_app_enabled": "In-app notifications",
+    "transaction_alerts": "Transaction alerts",
+    "security_alerts": "Security alerts",
+    "monthly_summary": "Monthly summary",
+    "milestone_alerts": "Milestone alerts",
+    "maturity_reminders": "Maturity reminders",
+    "load_error": "Could not load notifications.",
+    "mark_read_error": "Failed to mark as read."
+  },
   "common": {
     "confirm": "Confirm",
     "cancel": "Cancel",

@@ -20,6 +20,8 @@ from core.audit import write_audit_log
 from core.schemas import TerahResponse
 from core.security import verify_password
 
+from modules.notifications.service import dispatch_kyc_approved, dispatch_kyc_rejected
+
 from .repository import AdminRepository
 from .schemas import (
     AdminTokenResponse,
@@ -219,7 +221,10 @@ class AdminService:
             },
         )
 
-        # TODO (Milestone 6.2): enqueue KYC decision notification via BullMQ
+        if payload.decision == "approved":
+            await dispatch_kyc_approved(self.db, user)
+        else:
+            await dispatch_kyc_rejected(self.db, user, payload.rejection_reason or "")
         logger.info("KYC decision: user=%s decision=%s doc=%s actor=%s", user_id, payload.decision, doc.id, actor_id)
 
         return TerahResponse(

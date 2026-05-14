@@ -22,6 +22,11 @@ from core.schemas import TerahResponse
 from modules.accounts.repository import AccountRepository
 from modules.accounts.service import AccountService, notify_project_milestones
 from modules.auth.repository import AuthRepository
+from modules.notifications.service import (
+    dispatch_project_milestone,
+    dispatch_transaction_failed,
+    dispatch_transaction_success,
+)
 
 from .models import Transaction
 from .repository import TransactionRepository
@@ -297,7 +302,11 @@ class TransactionService:
         txn = await self._repo.update(txn, status="success", completed_at=now)
 
         # 10. Project milestone notifications (FR-020) — if credit side is a project account
-        notify_project_milestones(user.id, to_account, old_to_balance, updated_to.balance)
+        triggered = notify_project_milestones(user.id, to_account, old_to_balance, updated_to.balance)
+        for m in triggered:
+            await dispatch_project_milestone(
+                self.db, user, to_account.project_name or "", m, str(to_account.id)
+            )
 
         # 11. Audit log
         await write_audit_log(
@@ -715,6 +724,12 @@ class TransactionService:
                 metadata={"channel": txn.channel, "amount": txn.amount, "x_reference_id": x_reference_id},
             )
             await self.db.commit()
+            user = await AuthRepository(self.db).get_by_id(txn.initiated_by)
+            if user:
+                await dispatch_transaction_success(
+                    self.db, user,
+                    str(txn.amount), txn.transaction_type, str(txn.id),
+                )
             logger.info("MTN webhook: deposit success txn_id=%s amount=%d", txn.id, txn.amount)
 
         elif mtn_status == "FAILED":
@@ -728,7 +743,12 @@ class TransactionService:
                 metadata={"channel": txn.channel, "amount": txn.amount, "x_reference_id": x_reference_id, "reason": payload.get("reason")},
             )
             await self.db.commit()
-            # TODO Milestone 6.2: enqueue push/SMS notification to user (FR-040)
+            user = await AuthRepository(self.db).get_by_id(txn.initiated_by)
+            if user:
+                await dispatch_transaction_failed(
+                    self.db, user,
+                    str(txn.amount), txn.transaction_type, str(txn.id),
+                )
             logger.info("MTN webhook: deposit failed txn_id=%s", txn.id)
 
         else:
@@ -957,6 +977,12 @@ class TransactionService:
                 metadata={"channel": "orange_money", "amount": txn.amount, "order_id": order_id},
             )
             await self.db.commit()
+            user = await AuthRepository(self.db).get_by_id(txn.initiated_by)
+            if user:
+                await dispatch_transaction_success(
+                    self.db, user,
+                    str(txn.amount), txn.transaction_type, str(txn.id),
+                )
             logger.info(
                 "Orange webhook: %s success txn_id=%s amount=%d",
                 txn.transaction_type, txn.id, txn.amount,
@@ -982,7 +1008,12 @@ class TransactionService:
                 },
             )
             await self.db.commit()
-            # TODO Milestone 6.2: enqueue push/SMS notification (FR-040)
+            user = await AuthRepository(self.db).get_by_id(txn.initiated_by)
+            if user:
+                await dispatch_transaction_failed(
+                    self.db, user,
+                    str(txn.amount), txn.transaction_type, str(txn.id),
+                )
             logger.info("Orange webhook: %s failed txn_id=%s", txn.transaction_type, txn.id)
 
         else:

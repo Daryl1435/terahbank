@@ -88,6 +88,27 @@ class Settings(BaseSettings):
     ORANGE_MONEY_CALLBACK_URL: str = "https://api.terahbank.com/api/v1/webhooks/orange-money"
     ORANGE_MONEY_ENVIRONMENT: str = "sandbox"      # sandbox | production
 
+    # SMS — Termii (Cameroon: MTN + Orange)
+    TERMII_API_KEY: str = ""
+    TERMII_SENDER_ID: str = "TerahBank"
+    TERMII_BASE_URL: str = "https://api.ng.termii.com/api"
+
+    # Email — SendGrid
+    SENDGRID_API_KEY: str = ""
+    SENDGRID_FROM_EMAIL: str = "noreply@terahbank.com"
+    SENDGRID_FROM_NAME: str = "TerahBank"
+    SENDGRID_TEMPLATE_KYC_APPROVED: str = ""
+    SENDGRID_TEMPLATE_KYC_REJECTED: str = ""
+    SENDGRID_TEMPLATE_WELCOME: str = ""
+    SENDGRID_TEMPLATE_MONTHLY_SUMMARY: str = ""
+    SENDGRID_TEMPLATE_MATURITY_REMINDER: str = ""
+    SENDGRID_TEMPLATE_TRANSACTION_SUCCESS: str = ""
+    SENDGRID_TEMPLATE_TRANSACTION_FAILED: str = ""
+
+    # Push — Firebase Cloud Messaging
+    FCM_PROJECT_ID: str = ""
+    FCM_CREDENTIALS_PATH: str = ""     # path to service account JSON
+
     # Feature flags
     FEATURE_MTN_MOMO: bool = True
     FEATURE_ORANGE_MONEY: bool = True
