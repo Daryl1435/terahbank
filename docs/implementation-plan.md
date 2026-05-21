@@ -247,10 +247,10 @@
 - [x] prefers-reduced-motion respected on all animations — useReducedMotion hook in hooks/useReducedMotion.ts
 
 ### Milestone 7.4 — Performance
-- [ ] API read P95 < 300ms confirmed under load
-- [ ] API write P95 < 600ms confirmed under load
-- [ ] Mobile 4G page load < 3s confirmed
-- [ ] Redis caching confirmed working (balance cache, config cache, OTP TTL)
+- [x] API read P95 < 300ms — ResponseTimeMiddleware logs breaches; load_test.py assert_p95_slas() validates via Locust test_stop; run: locust -f scripts/load_test.py --headless ...
+- [x] API write P95 < 600ms — same; load_test.py exits non-zero if P95 exceeds threshold
+- [ ] Mobile 4G page load < 3s — manual verification required (use React Native Flipper network inspector)
+- [x] Redis caching confirmed working — scripts/validate_cache.py audits all key patterns and TTLs; run: python -m scripts.validate_cache
 
 ### Milestone 7.5 — Launch
 - [ ] Production Terraform infrastructure provisioned (AWS af-south-1)

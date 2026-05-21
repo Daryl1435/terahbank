@@ -9,7 +9,7 @@ Usage:
   pip install locust
   locust -f scripts/load_test.py --host http://localhost:8000
 
-  # Headless (CI / scripted):
+  # Headless (CI / scripted) — exits non-zero if any P95 SLA is breached:
   locust -f scripts/load_test.py \
     --host http://localhost:8000 \
     --headless \
@@ -18,7 +18,7 @@ Usage:
     --run-time 60s \
     --html load_test_report.html
 
-Target SLAs (from Milestone 7.4):
+Target SLAs (Milestone 7.4):
   - Read endpoints  P95 < 300ms
   - Write endpoints P95 < 600ms
 """
@@ -28,7 +28,7 @@ import hmac
 import json
 import uuid
 
-from locust import HttpUser, between, task
+from locust import HttpUser, between, events, task
 
 
 # ─── Scenario 1: Standard authenticated user session ─────────────────────────
@@ -173,3 +173,59 @@ class WebhookFlood(HttpUser):
             },
             name="/webhooks/mtn-momo [FAILED]",
         )
+
+
+# ─── P95 SLA assertion — runs after the test completes ───────────────────────
+
+# Write-endpoint identifiers — any task name containing these is a write.
+# Keep in sync with task `name=` kwargs above.
+_WRITE_KEYWORDS = ("register", "login", "deposit", "transfer", "withdraw", "mtn-momo")
+
+# SLA thresholds (ms)
+_READ_P95_LIMIT  = 300
+_WRITE_P95_LIMIT = 600
+
+
+@events.test_stop.add_listener
+def assert_p95_slas(environment, **kwargs):
+    """
+    After the load test ends, validate every sampled endpoint against the
+    Milestone 7.4 SLA thresholds and print a clear pass/fail summary.
+
+    Sets environment.process_exit_code = 1 if any threshold is breached —
+    this causes `locust --headless` to exit non-zero, failing CI.
+    """
+    print("\n" + "=" * 62)
+    print("  TerahBank Load Test — P95 SLA Report (Milestone 7.4)")
+    print("=" * 62)
+
+    failures: list[str] = []
+
+    for entry in environment.runner.stats.entries.values():
+        # Skip the aggregated "Total" stats entry
+        if entry.name == "Aggregated":
+            continue
+
+        p95_ms    = entry.get_response_time_percentile(0.95)
+        is_write  = any(kw in entry.name.lower() for kw in _WRITE_KEYWORDS)
+        limit_ms  = _WRITE_P95_LIMIT if is_write else _READ_P95_LIMIT
+        passed    = p95_ms <= limit_ms
+        kind      = "write" if is_write else "read "
+
+        status = "PASS" if passed else "FAIL"
+        line   = (
+            f"  [{status}] {kind}  P95={p95_ms:>5.0f}ms  "
+            f"limit={limit_ms}ms  {entry.name}"
+        )
+        print(line)
+
+        if not passed:
+            failures.append(line)
+
+    print("-" * 62)
+    if failures:
+        print(f"  {len(failures)} SLA breach(es) detected — see FAIL lines above")
+        environment.process_exit_code = 1
+    else:
+        print("  All endpoints within SLA thresholds")
+    print("=" * 62 + "\n")

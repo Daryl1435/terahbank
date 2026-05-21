@@ -438,7 +438,7 @@ class TestConfig:
         with (
             patch(f"{_SVC}.AdminRepository") as MockRepo,
             patch(f"{_SVC}.write_audit_log", new_callable=AsyncMock) as mock_audit,
-            patch(f"{_SVC}.redis_client", AsyncMock()),
+            patch("core.redis.get_redis_client", return_value=AsyncMock()),
         ):
             repo = MockRepo.return_value
             repo.upsert_config = AsyncMock(return_value=cfg)
@@ -739,8 +739,9 @@ class TestCSVExports:
 
             response = await AdminService(db).export_transactions_csv()
 
-        # Collect streamed content
-        content = b"".join([chunk async for chunk in response.body_iterator]).decode()
+        # Collect streamed content (StreamingResponse yields str chunks, not bytes)
+        chunks = [chunk async for chunk in response.body_iterator]
+        content = "".join(c if isinstance(c, str) else c.decode() for c in chunks)
         assert "transaction_id" in content
         assert "amount_xaf" in content
 
@@ -771,7 +772,8 @@ class TestCSVExports:
 
             response = await AdminService(db).export_users_csv()
 
-        content = b"".join([chunk async for chunk in response.body_iterator]).decode()
+        chunks = [chunk async for chunk in response.body_iterator]
+        content = "".join(c if isinstance(c, str) else c.decode() for c in chunks)
         assert "user_id" in content
         assert "kyc_status" in content
         assert user.email in content

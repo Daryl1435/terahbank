@@ -1,4 +1,5 @@
 import logging
+import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -89,6 +90,43 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class ResponseTimeMiddleware(BaseHTTPMiddleware):
+    """
+    Measures server-side request latency and attaches it to every response.
+
+    - Adds X-Response-Time header (milliseconds, 1-decimal precision).
+    - Logs a WARNING for requests that breach the Milestone 7.4 SLA:
+        reads  (GET/HEAD)   > 300ms
+        writes (POST/PATCH/PUT/DELETE) > 600ms
+    """
+
+    _WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+    _READ_SLA_MS   = 300
+    _WRITE_SLA_MS  = 600
+
+    async def dispatch(self, request: Request, call_next):
+        start    = time.perf_counter()
+        response = await call_next(request)
+        elapsed  = (time.perf_counter() - start) * 1000  # convert to ms
+
+        response.headers["X-Response-Time"] = f"{elapsed:.1f}ms"
+
+        is_write  = request.method in self._WRITE_METHODS
+        threshold = self._WRITE_SLA_MS if is_write else self._READ_SLA_MS
+
+        if elapsed > threshold:
+            logger.warning(
+                "Slow request — method=%s path=%s duration=%.1fms threshold=%dms request_id=%s",
+                request.method,
+                request.url.path,
+                elapsed,
+                threshold,
+                getattr(request.state, "request_id", "—"),
+            )
+
+        return response
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """
     Adds OWASP-recommended security headers to every API response.
@@ -132,6 +170,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(ResponseTimeMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
 app.add_middleware(
