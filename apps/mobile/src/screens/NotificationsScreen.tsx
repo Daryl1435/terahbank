@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
+  Switch,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -18,8 +19,10 @@ import {
   useNotifications,
   useMarkRead,
   useMarkAllRead,
+  useNotificationPreferences,
+  useUpdateNotificationPreferences,
 } from '@/hooks/useNotifications';
-import type { NotificationItem } from '@/services/notifications';
+import type { NotificationItem, NotificationPreferences } from '@/services/notifications';
 
 type NotificationsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Notifications'>;
 
@@ -82,10 +85,31 @@ function NotificationRow({
   );
 }
 
+type Tab = 'inbox' | 'preferences';
+
+type PrefKey = keyof NotificationPreferences;
+
+const PREF_ROWS: { key: PrefKey; label: string }[] = [
+  { key: 'push_enabled',        label: 'notifications.push_enabled' },
+  { key: 'email_enabled',       label: 'notifications.email_enabled' },
+  { key: 'sms_enabled',         label: 'notifications.sms_enabled' },
+  { key: 'in_app_enabled',      label: 'notifications.in_app_enabled' },
+  { key: 'transaction_alerts',  label: 'notifications.transaction_alerts' },
+  { key: 'security_alerts',     label: 'notifications.security_alerts' },
+  { key: 'monthly_summary',     label: 'notifications.monthly_summary' },
+  { key: 'milestone_alerts',    label: 'notifications.milestone_alerts' },
+  { key: 'maturity_reminders',  label: 'notifications.maturity_reminders' },
+];
+
 export default function NotificationsScreen({ navigation }: NotificationsScreenProps) {
+  const [activeTab, setActiveTab] = useState<Tab>('inbox');
+
   const { data, isLoading, isRefetching, refetch, isError } = useNotifications();
   const markRead    = useMarkRead();
   const markAllRead = useMarkAllRead();
+
+  const { data: prefs } = useNotificationPreferences();
+  const updatePrefs = useUpdateNotificationPreferences();
 
   const notifications = data?.notifications ?? [];
   const hasUnread     = notifications.some((n) => !n.read);
@@ -102,6 +126,10 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
     });
   }
 
+  function handleTogglePref(key: PrefKey, value: boolean) {
+    updatePrefs.mutate({ [key]: value });
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       {/* ── App Bar ─────────────────────────────────────────────────────────── */}
@@ -115,7 +143,7 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.appBarTitle}>{i18n.t('notifications.title')}</Text>
-        {hasUnread ? (
+        {activeTab === 'inbox' && hasUnread ? (
           <TouchableOpacity
             onPress={handleMarkAllRead}
             style={styles.markAllButton}
@@ -128,38 +156,78 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
         )}
       </View>
 
-      {/* ── Content ──────────────────────────────────────────────────────────── */}
-      {isLoading ? (
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.teal} />
-        </View>
-      ) : isError ? (
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{i18n.t('notifications.load_error')}</Text>
-          <TouchableOpacity onPress={() => refetch()} style={styles.retryButton}>
-            <Text style={styles.retryText}>{i18n.t('common.retry')}</Text>
-          </TouchableOpacity>
-        </View>
-      ) : notifications.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.emptyIcon}>🔔</Text>
-          <Text style={styles.emptyTitle}>{i18n.t('notifications.empty_title')}</Text>
-          <Text style={styles.emptySubtitle}>{i18n.t('notifications.empty_subtitle')}</Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.list}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
-              colors={[colors.teal]}
-              tintColor={colors.teal}
-            />
-          }
+      {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
+      <View style={styles.tabs}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'inbox' && styles.tabActive]}
+          onPress={() => setActiveTab('inbox')}
         >
-          {notifications.map((item) => (
-            <NotificationRow key={item.notification_id} item={item} onPress={handleMarkRead} />
+          <Text style={[styles.tabText, activeTab === 'inbox' && styles.tabTextActive]}>
+            {i18n.t('notifications.title')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'preferences' && styles.tabActive]}
+          onPress={() => setActiveTab('preferences')}
+        >
+          <Text style={[styles.tabText, activeTab === 'preferences' && styles.tabTextActive]}>
+            {i18n.t('notifications.preferences_title')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Inbox tab ────────────────────────────────────────────────────────── */}
+      {activeTab === 'inbox' && (
+        isLoading ? (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color={colors.teal} />
+          </View>
+        ) : isError ? (
+          <View style={styles.centered}>
+            <Text style={styles.errorText}>{i18n.t('notifications.load_error')}</Text>
+            <TouchableOpacity onPress={() => refetch()} style={styles.retryButton}>
+              <Text style={styles.retryText}>{i18n.t('common.retry')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : notifications.length === 0 ? (
+          <View style={styles.centered}>
+            <Text style={styles.emptyIcon}>🔔</Text>
+            <Text style={styles.emptyTitle}>{i18n.t('notifications.empty_title')}</Text>
+            <Text style={styles.emptySubtitle}>{i18n.t('notifications.empty_subtitle')}</Text>
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefetching}
+                onRefresh={refetch}
+                colors={[colors.teal]}
+                tintColor={colors.teal}
+              />
+            }
+          >
+            {notifications.map((item) => (
+              <NotificationRow key={item.notification_id} item={item} onPress={handleMarkRead} />
+            ))}
+          </ScrollView>
+        )
+      )}
+
+      {/* ── Preferences tab ──────────────────────────────────────────────────── */}
+      {activeTab === 'preferences' && (
+        <ScrollView contentContainerStyle={styles.prefList}>
+          {PREF_ROWS.map(({ key, label }) => (
+            <View key={key} style={styles.prefRow}>
+              <Text style={styles.prefLabel}>{i18n.t(label)}</Text>
+              <Switch
+                value={prefs ? prefs[key] : false}
+                onValueChange={(val) => handleTogglePref(key, val)}
+                trackColor={{ false: colors.lightGrey, true: colors.teal }}
+                thumbColor="#fff"
+                disabled={updatePrefs.isPending || prefs == null}
+              />
+            </View>
           ))}
         </ScrollView>
       )}
@@ -195,6 +263,49 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: 'Poppins_600SemiBold',
     textAlign: 'center',
+  },
+  tabs: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGrey,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: colors.teal,
+  },
+  tabText: {
+    fontSize: 14,
+    color: colors.midGrey,
+    fontFamily: 'Poppins_400Regular',
+  },
+  tabTextActive: {
+    color: colors.teal,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  prefList: {
+    padding: 16,
+  },
+  prefRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 8,
+    minHeight: 52,
+  },
+  prefLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.darkGrey,
+    fontFamily: 'Poppins_400Regular',
   },
   markAllButton: {
     width: 80,

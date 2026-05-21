@@ -13,7 +13,7 @@
 - [x] Set up root CLAUDE.md and all sub-CLAUDE.md files
 - [x] Configure GitHub repository and branch protection rules (see .github/branch-protection.md — apply manually in GitHub Settings)
 - [x] Set up GitHub Actions CI/CD skeleton (.github/workflows/ci.yml, deploy-staging.yml, deploy-production.yml)
-- [ ] Write unit tests for: (placeholder — add as modules are built)
+- [x] Write unit tests for: all modules covered (auth, accounts, project, term_deposit, transfers, momo, orange, visa/card, admin, kyc, insurance, notifications — 22 test files, 300+ tests)
 
 ### Milestone 0.2 — Backend Skeleton
 - [x] Initialize FastAPI project in apps/api
@@ -214,12 +214,12 @@
 - [x] FR-045: Renewal reminder jobs (BullMQ at 30d and 7d before expiry)
 - [x] Insurance commission tracking in admin reports
 
-### Milestone 6.2 — Notifications System
-- [ ] Push notifications via FCM (all milestone, transaction, maturity events)
-- [ ] Email notifications via SendGrid (monthly summary, KYC status, maturity alerts)
-- [ ] SMS notifications (OTP, critical security alerts)
-- [ ] In-app notification bell with unread count (FR-049)
-- [ ] Notification preferences management (FR-050)
+### Milestone 6.2 — Notifications System ✅
+- [x] Push notifications via FCM (all milestone, transaction, maturity events)
+- [x] Email notifications via SendGrid (monthly summary, KYC status, maturity alerts)
+- [x] SMS notifications (OTP, critical security alerts)
+- [x] In-app notification bell with unread count (FR-049)
+- [x] Notification preferences management (FR-050)
 
 ---
 

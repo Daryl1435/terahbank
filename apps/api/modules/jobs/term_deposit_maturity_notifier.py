@@ -52,36 +52,28 @@ async def process_term_deposit_maturity_notifier(job, token: str) -> None:  # ty
                 len(maturing_accounts), ALERT_DAYS,
             )
 
+            from modules.auth.repository import AuthRepository
+            from modules.notifications.service import dispatch_maturity_reminder
+
+            auth_repo = AuthRepository(db)
             for account in maturing_accounts:
                 days_remaining = (account.maturity_date - today).days
-                _dispatch_maturity_notification(account, days_remaining)
+                user = await auth_repo.get_by_id(account.user_id)
+                if user is None:
+                    logger.warning("Maturity notifier: user not found for account=%s", account.id)
+                    continue
+                account_name = account.account_number
+                await dispatch_maturity_reminder(
+                    db, user, account_name, days_remaining, str(account.balance), str(account.id)
+                )
+                logger.info(
+                    "MATURITY_ALERT_%dd dispatched: account=%s user=%s",
+                    days_remaining, account.id, account.user_id,
+                )
 
     except Exception as exc:
         logger.exception("Term deposit maturity notifier failed: %s", exc)
         raise
-
-
-def _dispatch_maturity_notification(account, days_remaining: int) -> None:
-    """
-    Dispatch a maturity notification stub for a term deposit account.
-    Implemented in Milestone 6.2 (push + email).
-    """
-    logger.info(
-        "MATURITY_ALERT_%dd: account=%s user=%s maturity=%s — TODO Milestone 6.2: enqueue notification",
-        days_remaining, account.id, account.user_id, account.maturity_date,
-    )
-    # TODO Milestone 6.2:
-    # await enqueue_notification(queue:notifications, {
-    #     "name": "send_maturity_alert",
-    #     "data": {
-    #         "user_id": str(account.user_id),
-    #         "account_id": str(account.id),
-    #         "days_remaining": days_remaining,
-    #         "maturity_date": account.maturity_date.isoformat(),
-    #         "principal": account.balance,
-    #     },
-    #     "opts": {"attempts": 3, "backoff": {"type": "exponential", "delay": 5000}},
-    # })
 
 
 async def register_term_deposit_maturity_job() -> None:
