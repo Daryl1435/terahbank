@@ -89,6 +89,49 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Adds OWASP-recommended security headers to every API response.
+
+    Headers added:
+    - HSTS: force HTTPS for 1 year (production only; skipped in dev so localhost works)
+    - X-Content-Type-Options: prevent MIME sniffing attacks
+    - X-Frame-Options: block clickjacking via iframes
+    - Referrer-Policy: don't leak the full URL to third parties
+    - Permissions-Policy: disable browser features we never use
+    - Content-Security-Policy: API returns JSON only — block everything else
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+
+        # HSTS — only meaningful over real HTTPS; skip in dev to avoid browser caching
+        if settings.APP_ENV != "development":
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
+
+        # Block MIME-type sniffing (e.g. serving a JS file as text/plain and executing it)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # Prevent the API responses from being embedded in iframes (clickjacking)
+        response.headers["X-Frame-Options"] = "DENY"
+
+        # Only send the origin (no path/query) in the Referer header to other sites
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # Disable browser features the API never needs
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(), payment=()"
+        )
+
+        # CSP: this is a JSON API — there are no scripts, styles, or frames to allow
+        response.headers["Content-Security-Policy"] = "default-src 'none'"
+
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIDMiddleware)
 
 app.add_middleware(
