@@ -88,10 +88,12 @@ class Settings(BaseSettings):
     ORANGE_MONEY_CALLBACK_URL: str = "https://api.terahbank.com/api/v1/webhooks/orange-money"
     ORANGE_MONEY_ENVIRONMENT: str = "sandbox"      # sandbox | production
 
-    # SMS — Termii (Cameroon: MTN + Orange)
-    TERMII_API_KEY: str = ""
-    TERMII_SENDER_ID: str = "TerahBank"
-    TERMII_BASE_URL: str = "https://api.ng.termii.com/api"
+    # SMS — Twilio (Cameroon: MTN + Orange)
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+    SMS_MONTHLY_LIMIT: int = 238       # ~$15 at $0.063/SMS to Cameroon
+    ADMIN_ALERT_EMAIL: str = ""        # receives budget alerts at 80% and 100%
 
     # Email — SendGrid
     SENDGRID_API_KEY: str = ""

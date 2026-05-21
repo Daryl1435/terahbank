@@ -51,7 +51,14 @@ async def enqueue_notification(job_name: str, data: dict) -> None:
 # ── Typed dispatch helpers (called from other services) ───────────────────────
 
 async def dispatch_otp_sms(phone_e164: str, otp_code: str) -> None:
-    """Send OTP via SMS. Uses BullMQ for retry support."""
+    """
+    Send OTP via SMS. Raises SMSBudgetExhaustedError if monthly limit is reached.
+    Callers (auth service) must catch this and return HTTP 503.
+    """
+    from core.sms import SMSBudgetExhaustedError, get_sms_usage
+    used, limit = await get_sms_usage()
+    if limit > 0 and used >= limit:
+        raise SMSBudgetExhaustedError(f"Monthly SMS limit of {limit} reached ({used} used)")
     await enqueue_notification("send_sms", {
         "to": phone_e164,
         "message": f"Votre code TerahBank est : {otp_code}. Valable 5 minutes. Ne le partagez jamais.",
@@ -127,11 +134,26 @@ async def dispatch_transaction_failed(
         db, user.id, "TRANSACTION_FAILED", title, body,
         {"transaction_id": txn_id, "amount": amount_xaf, "type": txn_type},
     )
-    await enqueue_notification("send_sms", {
-        "to": user.phone_number,
-        "message": f"TerahBank: Votre {txn_type} de {amount_xaf} XAF a echoue. Contactez le support si necessaire.",
-        "msg_type": "ALERT",
-    })
+    from core.sms import SMSBudgetExhaustedError, get_sms_usage
+    used, limit = await get_sms_usage()
+    if limit > 0 and used >= limit:
+        logger.warning("SMS budget exhausted — falling back to email for TRANSACTION_FAILED alert (user=%s)", user.id)
+        await enqueue_notification("send_email", {
+            "to_email": user.email,
+            "to_name": user.full_name,
+            "template_id": "transaction_failed",
+            "dynamic_data": {
+                "first_name": user.full_name.split()[0],
+                "amount": amount_xaf,
+                "channel": txn_type,
+            },
+        })
+    else:
+        await enqueue_notification("send_sms", {
+            "to": user.phone_number,
+            "message": f"TerahBank: Votre {txn_type} de {amount_xaf} XAF a echoue. Contactez le support si necessaire.",
+            "msg_type": "ALERT",
+        })
 
 
 async def dispatch_project_milestone(

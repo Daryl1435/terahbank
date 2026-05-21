@@ -56,6 +56,31 @@ async def send_email(
         raise
 
 
+async def send_plain_email(to_email: str, subject: str, body: str) -> None:
+    """Send a plain-text email without a SendGrid template. Used for admin alerts."""
+    if not settings.SENDGRID_API_KEY:
+        logger.warning("SENDGRID_API_KEY not set — plain email skipped to %s", to_email)
+        return
+
+    payload = {
+        "from": {"email": settings.SENDGRID_FROM_EMAIL, "name": settings.SENDGRID_FROM_NAME},
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "subject": subject,
+        "content": [{"type": "text/plain", "value": body}],
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.SENDGRID_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.post(f"{_BASE}/mail/send", json=payload, headers=headers)
+            resp.raise_for_status()
+            logger.info("Plain email sent to %s (subject=%s)", to_email, subject)
+    except Exception as exc:
+        logger.error("Plain email failed to %s: %s", to_email, exc)
+
+
 # ── Typed helpers ─────────────────────────────────────────────────────────────
 
 async def send_welcome_email(to_email: str, full_name: str) -> None:

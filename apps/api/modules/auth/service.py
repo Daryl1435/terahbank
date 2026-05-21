@@ -107,7 +107,14 @@ class AuthService:
         )
 
         from modules.notifications.service import dispatch_otp_sms
-        await dispatch_otp_sms(user.phone_number, otp)
+        from core.sms import SMSBudgetExhaustedError
+        try:
+            await dispatch_otp_sms(user.phone_number, otp)
+        except SMSBudgetExhaustedError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"code": "SMS_UNAVAILABLE", "message": "SMS service temporarily unavailable. Please try again later."},
+            )
 
         return TerahResponse(
             success=True,
@@ -306,7 +313,14 @@ class AuthService:
         )
 
         from modules.notifications.service import dispatch_otp_sms
-        await dispatch_otp_sms(user.phone_number, otp)
+        from core.sms import SMSBudgetExhaustedError
+        try:
+            await dispatch_otp_sms(user.phone_number, otp)
+        except SMSBudgetExhaustedError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"code": "SMS_UNAVAILABLE", "message": "SMS service temporarily unavailable. Please try again later."},
+            )
 
         return TerahResponse(
             success=True,
@@ -423,7 +437,14 @@ class AuthService:
         )
 
         from modules.notifications.service import dispatch_otp_sms
-        await dispatch_otp_sms(user.phone_number, otp)
+        from core.sms import SMSBudgetExhaustedError
+        try:
+            await dispatch_otp_sms(user.phone_number, otp)
+        except SMSBudgetExhaustedError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"code": "SMS_UNAVAILABLE", "message": "SMS service temporarily unavailable. Please try again later."},
+            )
 
         return TerahResponse(success=True, message="OTP resent successfully.")
 

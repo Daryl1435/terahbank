@@ -90,9 +90,9 @@ class TestEnqueueNotification:
             await enqueue_notification("send_sms", {"to": "+237600000001", "message": "test"})
 
         mock_queue.add.assert_awaited_once()
-        call_args = mock_queue.add.call_args
-        assert call_args[0][0] == "send_sms"
-        assert call_args[0][1]["to"] == "+237600000001"
+        args = mock_queue.add.call_args[0]
+        assert args[0] == "send_sms"
+        assert args[1]["to"] == "+237600000001"
 
     @pytest.mark.asyncio
     async def test_swallows_bullmq_exception(self):
@@ -103,7 +103,6 @@ class TestEnqueueNotification:
             patch("bullmq.Queue", side_effect=Exception("Redis down")),
             patch("core.redis.get_redis_client", return_value=MagicMock()),
         ):
-            # Should not raise
             await enqueue_notification("send_sms", {"to": "+237"})
 
 
@@ -114,7 +113,10 @@ class TestDispatchOtpSms:
     async def test_enqueues_sms_with_otp_type(self):
         from modules.notifications.service import dispatch_otp_sms
 
-        with patch(f"{_SVC}.enqueue_notification", new_callable=AsyncMock) as mock_enq:
+        with (
+            patch("core.sms.get_sms_usage", new_callable=AsyncMock, return_value=(0, 238)),
+            patch(f"{_SVC}.enqueue_notification", new_callable=AsyncMock) as mock_enq,
+        ):
             await dispatch_otp_sms("+237600000001", "123456")
 
         mock_enq.assert_awaited_once()
@@ -123,6 +125,20 @@ class TestDispatchOtpSms:
         assert data["to"] == "+237600000001"
         assert "123456" in data["message"]
         assert data["msg_type"] == "OTP"
+
+    @pytest.mark.asyncio
+    async def test_raises_when_budget_exhausted(self):
+        from core.sms import SMSBudgetExhaustedError
+        from modules.notifications.service import dispatch_otp_sms
+
+        with (
+            patch("core.sms.get_sms_usage", new_callable=AsyncMock, return_value=(238, 238)),
+            patch(f"{_SVC}.enqueue_notification", new_callable=AsyncMock) as mock_enq,
+        ):
+            with pytest.raises(SMSBudgetExhaustedError):
+                await dispatch_otp_sms("+237600000001", "123456")
+
+        mock_enq.assert_not_awaited()
 
 
 # ─── dispatch_push_and_inapp ──────────────────────────────────────────────────
@@ -268,8 +284,11 @@ class TestDispatchTransactionFailed:
         db = _make_db()
         user = _make_user()
 
-        with patch(f"{_SVC}.dispatch_push_and_inapp", new_callable=AsyncMock) as mock_push, \
-             patch(f"{_SVC}.enqueue_notification", new_callable=AsyncMock) as mock_enq:
+        with (
+            patch("core.sms.get_sms_usage", new_callable=AsyncMock, return_value=(0, 238)),
+            patch(f"{_SVC}.dispatch_push_and_inapp", new_callable=AsyncMock) as mock_push,
+            patch(f"{_SVC}.enqueue_notification", new_callable=AsyncMock) as mock_enq,
+        ):
             await dispatch_transaction_failed(db, user, "5000", "deposit", str(uuid.uuid4()))
 
         mock_push.assert_awaited_once()
@@ -278,6 +297,26 @@ class TestDispatchTransactionFailed:
         assert job_name == "send_sms"
         assert data["to"] == user.phone_number
         assert data["msg_type"] == "ALERT"
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_email_when_budget_exhausted(self):
+        from modules.notifications.service import dispatch_transaction_failed
+
+        db = _make_db()
+        user = _make_user()
+
+        with (
+            patch("core.sms.get_sms_usage", new_callable=AsyncMock, return_value=(238, 238)),
+            patch(f"{_SVC}.dispatch_push_and_inapp", new_callable=AsyncMock),
+            patch(f"{_SVC}.enqueue_notification", new_callable=AsyncMock) as mock_enq,
+        ):
+            await dispatch_transaction_failed(db, user, "5000", "deposit", str(uuid.uuid4()))
+
+        mock_enq.assert_awaited_once()
+        job_name, data = mock_enq.call_args[0]
+        assert job_name == "send_email"
+        assert data["to_email"] == user.email
+        assert data["template_id"] == "transaction_failed"
 
 
 # ─── dispatch_project_milestone ──────────────────────────────────────────────
