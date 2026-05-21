@@ -185,15 +185,21 @@
   "profile": {
     "title": "Mon profil",
     "personal_info": "Informations personnelles",
+    "full_name": "Nom complet",
     "security": "Sécurité",
     "change_password": "Changer le mot de passe",
     "biometric_settings": "Paramètres biométriques",
     "logout": "Se déconnecter",
+    "logout_confirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
     "account_status": "Statut du compte",
     "kyc_status": "Statut KYC",
     "kyc_approved": "Vérifié",
     "kyc_pending": "En attente",
-    "kyc_rejected": "Rejeté"
+    "kyc_rejected": "Rejeté",
+    "font_size": "Taille de texte",
+    "font_size_small": "Petit",
+    "font_size_medium": "Moyen",
+    "font_size_large": "Grand"
   },
   "transactions": {
     "deposit_title": "Déposer des fonds",
@@ -384,6 +390,7 @@
     "edit": "Modifier",
     "or": "ou",
     "error": "Erreur",
+    "just_now": "À l'instant",
     "generic_error": "Une erreur est survenue. Veuillez réessayer."
   },
   "language": {

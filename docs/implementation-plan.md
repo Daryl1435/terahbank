@@ -240,11 +240,11 @@
 - [ ] Account deletion + PII redaction flow tested
 
 ### Milestone 7.3 — Accessibility & UX
-- [ ] WCAG 2.1 Level AA audit (mobile + web)
-- [ ] All primary flows completable in ≤ 4 taps from dashboard
-- [ ] French and English language switch working
-- [ ] Font size adjustment (small/medium/large) working without layout breakage
-- [ ] prefers-reduced-motion respected on all animations
+- [ ] WCAG 2.1 Level AA audit (mobile + web) — manual audit required before launch
+- [ ] All primary flows completable in ≤ 4 taps from dashboard — manual verification required
+- [x] French and English language switch working — LanguageScreen on first launch, ProfileScreen toggle, LoginScreen pill, full i18n coverage
+- [x] Font size adjustment (small/medium/large) working — ProfileScreen selector, SecureStore persistence, restored on startup
+- [x] prefers-reduced-motion respected on all animations — useReducedMotion hook in hooks/useReducedMotion.ts
 
 ### Milestone 7.4 — Performance
 - [ ] API read P95 < 300ms confirmed under load

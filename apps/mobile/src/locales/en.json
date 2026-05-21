@@ -185,15 +185,21 @@
   "profile": {
     "title": "My Profile",
     "personal_info": "Personal information",
+    "full_name": "Full name",
     "security": "Security",
     "change_password": "Change password",
     "biometric_settings": "Biometric settings",
     "logout": "Sign out",
+    "logout_confirm": "Are you sure you want to sign out?",
     "account_status": "Account status",
     "kyc_status": "KYC status",
     "kyc_approved": "Verified",
     "kyc_pending": "Pending",
-    "kyc_rejected": "Rejected"
+    "kyc_rejected": "Rejected",
+    "font_size": "Text size",
+    "font_size_small": "Small",
+    "font_size_medium": "Medium",
+    "font_size_large": "Large"
   },
   "transactions": {
     "deposit_title": "Deposit Funds",
@@ -384,6 +390,7 @@
     "edit": "Edit",
     "or": "or",
     "error": "Error",
+    "just_now": "Just now",
     "generic_error": "Something went wrong. Please try again."
   },
   "language": {

@@ -21,7 +21,7 @@ import AnimatedSplash from '@/components/AnimatedSplash';
 SplashScreen.preventAutoHideAsync();
 
 import { useAuthStore } from '@/stores/authStore';
-import { useAppStore, LANGUAGE_PREF_KEY, LANGUAGE_SELECTED_KEY } from '@/stores/appStore';
+import { useAppStore, LANGUAGE_PREF_KEY, LANGUAGE_SELECTED_KEY, FONT_SIZE_PREF_KEY } from '@/stores/appStore';
 import { colors } from '@/utils/tokens';
 import i18n from '@/locales';
 
@@ -217,32 +217,40 @@ export default function App() {
   const language            = useAppStore((s) => s.language);
   const setLanguage         = useAppStore((s) => s.setLanguage);
   const setLanguageSelected = useAppStore((s) => s.setLanguageSelected);
+  const setFontSize         = useAppStore((s) => s.setFontSize);
 
-  // ── On mount: restore persisted language from SecureStore ─────────────────
+  // ── On mount: restore persisted preferences from SecureStore ────────────────
   useEffect(() => {
-    async function restoreLanguage() {
+    async function restorePrefs() {
       try {
-        const storedLang     = await SecureStore.getItemAsync(LANGUAGE_PREF_KEY);
-        const hasSelected    = await SecureStore.getItemAsync(LANGUAGE_SELECTED_KEY);
+        const [storedLang, hasSelected, storedFontSize] = await Promise.all([
+          SecureStore.getItemAsync(LANGUAGE_PREF_KEY),
+          SecureStore.getItemAsync(LANGUAGE_SELECTED_KEY),
+          SecureStore.getItemAsync(FONT_SIZE_PREF_KEY),
+        ]);
 
+        // Restore language
         if ((storedLang === 'fr' || storedLang === 'en') && hasSelected === 'true') {
-          // Restore silently — update store + i18n without re-persisting
           setLanguage(storedLang);
           setLanguageSelected(true);
           i18n.locale = storedLang;
           setShowLanguagePicker(false);
         } else {
-          // First launch — show the language picker
           setShowLanguagePicker(true);
         }
+
+        // Restore font size
+        if (storedFontSize === 'small' || storedFontSize === 'medium' || storedFontSize === 'large') {
+          setFontSize(storedFontSize);
+        }
       } catch {
-        // SecureStore unavailable — default to French and skip picker
+        // SecureStore unavailable — use defaults and skip picker
         setShowLanguagePicker(false);
       } finally {
         setAppReady(true);
       }
     }
-    restoreLanguage();
+    restorePrefs();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

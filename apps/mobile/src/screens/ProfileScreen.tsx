@@ -15,6 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
+import type { FontSize } from '@/stores/appStore';
 import { TerahButton } from '@/components/TerahButton';
 import { TerahIcon } from '@/components/TerahIcon';
 import type { TerahIconName } from '@/components/TerahIcon';
@@ -62,10 +63,12 @@ const ProfileRow: React.FC<ProfileRowProps> = ({ icon, label, value, onPress, ch
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
-  const kycStatus  = useAuthStore((s) => s.kycStatus);
-  const clearAuth  = useAuthStore((s) => s.clearAuth);
-  const language   = useAppStore((s) => s.language);
+  const kycStatus   = useAuthStore((s) => s.kycStatus);
+  const clearAuth   = useAuthStore((s) => s.clearAuth);
+  const language    = useAppStore((s) => s.language);
   const setLanguage = useAppStore((s) => s.setLanguage);
+  const fontSize    = useAppStore((s) => s.fontSize);
+  const setFontSize = useAppStore((s) => s.setFontSize);
 
   const kycLabel =
     kycStatus === 'approved' ? i18n.t('profile.kyc_approved')
@@ -80,7 +83,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const handleLogout = () => {
     Alert.alert(
       i18n.t('profile.logout'),
-      i18n.t('profile.logout_confirm') ?? 'Êtes-vous sûr de vouloir vous déconnecter ?',
+      i18n.t('profile.logout_confirm'),
       [
         { text: i18n.t('common.cancel'), style: 'cancel' },
         {
@@ -151,7 +154,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <View style={styles.card}>
             <ProfileRow
               icon="person-outline"
-              label={i18n.t('profile.full_name') ?? 'Nom complet'}
+              label={i18n.t('profile.full_name')}
               value="—"
               onPress={() => Alert.alert('Bientôt disponible', 'Jalon 5.')}
               chevron
@@ -210,6 +213,38 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                   <TerahIcon name="checkmark-circle" size={16} color={colors.teal} />
                 )}
               </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* ── Font size ─────────────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{i18n.t('profile.font_size')}</Text>
+          <View style={styles.card}>
+            <View style={styles.fontSizeRow}>
+              {(['small', 'medium', 'large'] as const).map((size) => (
+                <TouchableOpacity
+                  key={size}
+                  style={[styles.fontSizeCard, fontSize === size && styles.fontSizeCardActive]}
+                  onPress={() => setFontSize(size)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: fontSize === size }}
+                >
+                  <Text style={[styles.fontSizeLabel, fontSize === size && styles.fontSizeLabelActive]}>
+                    {i18n.t(`profile.font_size_${size}`)}
+                  </Text>
+                  <Text style={[
+                    styles.fontSizePreview,
+                    fontSize === size && styles.fontSizeLabelActive,
+                    { fontSize: size === 'small' ? 14 : size === 'medium' ? 18 : 24 },
+                  ]}>
+                    Aa
+                  </Text>
+                  {fontSize === size && (
+                    <TerahIcon name="checkmark-circle" size={14} color={colors.teal} />
+                  )}
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         </View>
@@ -412,6 +447,39 @@ const styles = StyleSheet.create({
   },
   langLabelActive: {
     color: colors.navy,
+  },
+
+  // Font size selector
+  fontSizeRow: {
+    flexDirection: 'row',
+    padding: 12,
+    gap: 8,
+  },
+  fontSizeCard: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: colors.lightGrey,
+    backgroundColor: colors.offWhite,
+  },
+  fontSizeCardActive: {
+    borderColor: colors.teal,
+    backgroundColor: `${colors.teal}10`,
+  },
+  fontSizeLabel: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 11,
+    color: colors.midGrey,
+  },
+  fontSizeLabelActive: {
+    color: colors.navy,
+  },
+  fontSizePreview: {
+    fontFamily: 'Poppins_700Bold',
+    color: colors.midGrey,
   },
 
   logoutButton: {

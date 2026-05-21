@@ -15,6 +15,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
 import { colors } from '@/utils/tokens';
 import i18n from '@/locales';
+import { TerahIcon } from '@/components/TerahIcon';
+import type { TerahIconName } from '@/components/TerahIcon';
 import {
   useNotifications,
   useMarkRead,
@@ -30,29 +32,34 @@ interface NotificationsScreenProps {
   navigation: NotificationsNavigationProp;
 }
 
-// Icon by notification type
-const TYPE_ICON: Record<string, string> = {
-  KYC_APPROVED:         '✅',
-  KYC_REJECTED:         '❌',
-  TRANSACTION_SUCCESS:  '💸',
-  TRANSACTION_FAILED:   '⚠️',
-  MATURITY_REMINDER:    '⏰',
+// ── Notification type → icon + colour mapping ────────────────────────────────
+
+interface IconSpec { name: TerahIconName; color: string; bg: string }
+
+const TYPE_ICON: Record<string, IconSpec> = {
+  KYC_APPROVED:        { name: 'checkmark-circle',   color: colors.success, bg: `${colors.success}18` },
+  KYC_REJECTED:        { name: 'close-circle',        color: colors.error,   bg: `${colors.error}18`   },
+  TRANSACTION_SUCCESS: { name: 'cash-outline',        color: colors.teal,    bg: `${colors.teal}18`    },
+  TRANSACTION_FAILED:  { name: 'warning-outline',     color: colors.warning, bg: `${colors.warning}18` },
+  MATURITY_REMINDER:   { name: 'alarm-outline',       color: colors.warning, bg: `${colors.warning}18` },
 };
 
-function getIcon(type: string): string {
-  if (type.startsWith('PROJECT_MILESTONE')) return '🎯';
-  return TYPE_ICON[type] ?? '🔔';
+function getIconSpec(type: string): IconSpec {
+  if (type.startsWith('PROJECT_MILESTONE')) {
+    return { name: 'trophy-outline', color: colors.teal, bg: `${colors.teal}18` };
+  }
+  return TYPE_ICON[type] ?? { name: 'notifications-outline', color: colors.midGrey, bg: colors.lightGrey };
 }
 
 function formatRelativeDate(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff  = Date.now() - new Date(iso).getTime();
   const mins  = Math.floor(diff / 60_000);
   const hours = Math.floor(diff / 3_600_000);
   const days  = Math.floor(diff / 86_400_000);
-  if (mins  <  1) return "À l'instant";
-  if (mins  < 60) return `Il y a ${mins} min`;
-  if (hours < 24) return `Il y a ${hours}h`;
-  return `Il y a ${days}j`;
+  if (mins  <  1) return i18n.t('common.just_now') ?? "À l'instant";
+  if (mins  < 60) return `${mins} min`;
+  if (hours < 24) return `${hours}h`;
+  return `${days}j`;
 }
 
 function NotificationRow({
@@ -62,14 +69,16 @@ function NotificationRow({
   item: NotificationItem;
   onPress: (id: string) => void;
 }) {
+  const spec = getIconSpec(item.type);
   return (
     <TouchableOpacity
       style={[styles.row, !item.read && styles.rowUnread]}
       onPress={() => onPress(item.notification_id)}
       accessibilityRole="button"
     >
-      <View style={styles.rowIcon}>
-        <Text style={styles.iconText}>{getIcon(item.type)}</Text>
+      {/* Coloured icon badge per notification type */}
+      <View style={[styles.rowIconWrap, { backgroundColor: spec.bg }]}>
+        <TerahIcon name={spec.name} size={20} color={spec.color} />
       </View>
       <View style={styles.rowContent}>
         <Text style={[styles.rowTitle, !item.read && styles.rowTitleUnread]} numberOfLines={1}>
@@ -132,17 +141,21 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      {/* ── App Bar ─────────────────────────────────────────────────────────── */}
+
+      {/* ── App Bar ──────────────────────────────────────────────────────────── */}
       <View style={styles.appBar}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel={i18n.t('common.back')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text style={styles.backText}>←</Text>
+          <TerahIcon name="chevron-back" size={22} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.appBarTitle}>{i18n.t('notifications.title')}</Text>
+
         {activeTab === 'inbox' && hasUnread ? (
           <TouchableOpacity
             onPress={handleMarkAllRead}
@@ -191,7 +204,9 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
           </View>
         ) : notifications.length === 0 ? (
           <View style={styles.centered}>
-            <Text style={styles.emptyIcon}>🔔</Text>
+            <View style={styles.emptyIconWrap}>
+              <TerahIcon name="notifications-outline" size={40} color={colors.midGrey} />
+            </View>
             <Text style={styles.emptyTitle}>{i18n.t('notifications.empty_title')}</Text>
             <Text style={styles.emptySubtitle}>{i18n.t('notifications.empty_subtitle')}</Text>
           </View>
@@ -252,10 +267,6 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  backText: {
-    color: '#fff',
-    fontSize: 20,
   },
   appBarTitle: {
     flex: 1,
@@ -326,8 +337,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 32,
   },
-  emptyIcon: {
-    fontSize: 48,
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.lightGrey,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   emptyTitle: {
@@ -373,22 +389,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     minHeight: 72,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   rowUnread: {
     backgroundColor: '#EBF8FF',
   },
-  rowIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.lightGrey,
+  rowIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     flexShrink: 0,
-  },
-  iconText: {
-    fontSize: 18,
   },
   rowContent: {
     flex: 1,

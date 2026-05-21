@@ -7,9 +7,10 @@ import * as SecureStore from 'expo-secure-store';
 // SecureStore keys — exported so App.tsx can read them at startup
 export const LANGUAGE_PREF_KEY     = 'terahbank_language_pref';
 export const LANGUAGE_SELECTED_KEY = 'terahbank_language_selected';
+export const FONT_SIZE_PREF_KEY    = 'terahbank_font_size_pref';
 
 type Language = 'fr' | 'en';
-type FontSize  = 'small' | 'medium' | 'large';
+export type FontSize  = 'small' | 'medium' | 'large';
 
 interface AppState {
   language:         Language;
@@ -46,7 +47,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ languageSelected });
   },
 
-  setFontSize: (fontSize) => set({ fontSize }),
+  setFontSize: (fontSize) => {
+    SecureStore.setItemAsync(FONT_SIZE_PREF_KEY, fontSize).catch(() => {});
+    set({ fontSize });
+  },
 
   touchActivity: () => set({ lastActiveAt: Date.now() }),
 
