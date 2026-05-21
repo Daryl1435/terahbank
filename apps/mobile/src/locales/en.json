@@ -87,7 +87,8 @@
     "accounts_section": "My Accounts",
     "open_account": "Open an Account",
     "my_cards": "My VISA Cards",
-    "insurance": "My Insurance"
+    "insurance": "My Insurance",
+    "view_history": "View history"
   },
   "insurance": {
     "title": "Insurance",
@@ -384,5 +385,17 @@
     "or": "or",
     "error": "Error",
     "generic_error": "Something went wrong. Please try again."
+  },
+  "language": {
+    "choose_title": "Choose your language",
+    "choose_sub": "Choisissez votre langue",
+    "french": "Français",
+    "french_sub": "Langue officielle",
+    "english": "English",
+    "english_sub": "Official language",
+    "continue_fr": "Continuer",
+    "continue_en": "Continue",
+    "section_title": "Language",
+    "current": "Current language"
   }
 }

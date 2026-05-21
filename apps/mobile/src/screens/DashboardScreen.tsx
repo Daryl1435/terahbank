@@ -16,6 +16,7 @@ import { useTotalBalance } from '@/hooks/useBalance';
 import { AccountCard } from '@/components/AccountCard';
 import { TerahButton } from '@/components/TerahButton';
 import { TerahLogo } from '@/components/TerahLogo';
+import { TerahIcon } from '@/components/TerahIcon';
 import { colors } from '@/utils/tokens';
 import { formatXAF } from '@/utils/formatXAF';
 import i18n from '@/locales';
@@ -35,15 +36,13 @@ const getGreetingKey = (): string => {
 };
 
 export default function DashboardScreen({ navigation }: DashboardScreenProps) {
-  const touchActivity = useAppStore((s) => s.touchActivity);
+  const touchActivity  = useAppStore((s) => s.touchActivity);
   const isSessionExpired = useAppStore((s) => s.isSessionExpired);
 
   const { totalBalance, accounts, isLoading, refetch, isRefetching } = useTotalBalance();
 
   // FR-008: touch activity on every render
-  useEffect(() => {
-    touchActivity();
-  });
+  useEffect(() => { touchActivity(); });
 
   // FR-008: session expiry check
   useEffect(() => {
@@ -52,34 +51,43 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
     }
   });
 
-  const fullName = useAuthStore((s) => s.fullName);
+  const fullName  = useAuthStore((s) => s.fullName);
   const firstName = fullName?.split(' ')[0] ?? '';
-  const greetingKey = getGreetingKey();
-  const greeting = i18n.t(greetingKey, { name: firstName });
+  const greeting  = i18n.t(getGreetingKey(), { name: firstName });
+
   const { data: unreadCount } = useUnreadCount();
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* ── App header (FR-049, FR-050) ─────────────────────────────────────── */}
+
+      {/* ── App bar ─────────────────────────────────────────────────────────── */}
       <View style={styles.appBar}>
         <TerahLogo variant="full" width={140} onDark />
+
         <View style={styles.appBarActions}>
-          {/* FR-049: Notification bell with live unread badge */}
+
+          {/* Notification bell with live unread badge (FR-049) */}
           <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}
             accessibilityRole="button"
             accessibilityLabel={i18n.t('dashboard.notifications')}
             style={styles.iconButton}
           >
-            <Text style={styles.iconText}>🔔</Text>
+            <TerahIcon
+              name={unreadCount ? 'notifications' : 'notifications-outline'}
+              size={24}
+              color={colors.white}
+            />
             {unreadCount != null && unreadCount > 0 && (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{unreadCount > 99 ? '99+' : String(unreadCount)}</Text>
+                <Text style={styles.badgeText}>
+                  {unreadCount > 99 ? '99+' : String(unreadCount)}
+                </Text>
               </View>
             )}
           </TouchableOpacity>
 
-          {/* FR-050: Profile access */}
+          {/* Avatar / profile shortcut (FR-050) */}
           <TouchableOpacity
             onPress={() => navigation.navigate('Profile')}
             accessibilityRole="button"
@@ -87,9 +95,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             style={styles.iconButton}
           >
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitial}>U</Text>
+              <Text style={styles.avatarInitial}>
+                {firstName.charAt(0).toUpperCase() || 'U'}
+              </Text>
             </View>
           </TouchableOpacity>
+
         </View>
       </View>
 
@@ -98,63 +109,70 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
       >
+
         {/* Greeting */}
         <Text style={styles.greeting}>{greeting}</Text>
 
-        {/* FR-046: Total balance card */}
+        {/* ── Total balance card (FR-046) ──────────────────────────────────── */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>{i18n.t('dashboard.total_balance')}</Text>
-          <Text style={styles.balanceAmount}>
-            {isLoading ? '—' : formatXAF(totalBalance ?? 0)}
-          </Text>
+          {/* Teal accent strip across the top of the card */}
+          <View style={styles.balanceCardAccent} />
+
+          <View style={styles.balanceCardInner}>
+            <Text style={styles.balanceLabel}>{i18n.t('dashboard.total_balance')}</Text>
+            <Text style={styles.balanceAmount}>
+              {isLoading ? '—' : formatXAF(totalBalance ?? 0)}
+            </Text>
+
+            {/* Quick link to full transaction history */}
+            <TouchableOpacity
+              onPress={() => navigation.navigate('TransactionHistory', {})}
+              style={styles.historyLink}
+              accessibilityRole="button"
+            >
+              <Text style={styles.historyLinkText}>{i18n.t('dashboard.view_history')}</Text>
+              <TerahIcon name="arrow-forward" size={13} color={colors.teal} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* FR-048: Quick action buttons */}
-        <View style={styles.quickActions}>
-          <TerahButton
+        {/* ── Quick action buttons (FR-048) ───────────────────────────────── */}
+        <View style={styles.quickActionsCard}>
+          <QuickAction
+            icon="arrow-down-circle-outline"
             label={i18n.t('dashboard.deposit')}
             onPress={() => navigation.navigate('Deposit')}
-            style={styles.actionButton}
+            primary
           />
-          <TerahButton
+          <View style={styles.quickDivider} />
+          <QuickAction
+            icon="arrow-up-circle-outline"
             label={i18n.t('dashboard.withdraw')}
             onPress={() => navigation.navigate('Withdraw')}
-            variant="secondary"
-            style={styles.actionButton}
           />
-          <TerahButton
+          <View style={styles.quickDivider} />
+          <QuickAction
+            icon="swap-horizontal-outline"
             label={i18n.t('dashboard.transfer')}
             onPress={() => navigation.navigate('Transfer')}
-            variant="secondary"
-            style={styles.actionButton}
           />
         </View>
 
-        {/* Card shortcut */}
-        <TouchableOpacity
+        {/* ── My Cards shortcut ────────────────────────────────────────────── */}
+        <ShortcutRow
+          icon="card-outline"
+          label={i18n.t('dashboard.my_cards')}
           onPress={() => navigation.navigate('Cards')}
-          style={styles.cardShortcut}
-          accessibilityRole="button"
-          activeOpacity={0.75}
-        >
-          <Text style={styles.cardShortcutIcon}>💳</Text>
-          <Text style={styles.cardShortcutLabel}>{i18n.t('dashboard.my_cards')}</Text>
-          <Text style={styles.cardShortcutChevron}>›</Text>
-        </TouchableOpacity>
+        />
 
-        {/* Insurance shortcut */}
-        <TouchableOpacity
+        {/* ── Insurance shortcut ───────────────────────────────────────────── */}
+        <ShortcutRow
+          icon="shield-checkmark-outline"
+          label={i18n.t('dashboard.insurance')}
           onPress={() => navigation.navigate('Insurance')}
-          style={styles.cardShortcut}
-          accessibilityRole="button"
-          activeOpacity={0.75}
-        >
-          <Text style={styles.cardShortcutIcon}>🛡</Text>
-          <Text style={styles.cardShortcutLabel}>{i18n.t('dashboard.insurance')}</Text>
-          <Text style={styles.cardShortcutChevron}>›</Text>
-        </TouchableOpacity>
+        />
 
-        {/* FR-047: Account list with tap-to-expand */}
+        {/* ── Accounts section (FR-047) ────────────────────────────────────── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{i18n.t('dashboard.accounts_section')}</Text>
           <TouchableOpacity
@@ -162,7 +180,9 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
             accessibilityRole="button"
             accessibilityLabel={i18n.t('dashboard.open_account')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.openAccountBtn}
           >
+            <TerahIcon name="add-circle-outline" size={15} color={colors.teal} />
             <Text style={styles.addAccountLink}>{i18n.t('dashboard.open_account')}</Text>
           </TouchableOpacity>
         </View>
@@ -177,10 +197,12 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
           />
         ))}
 
-        {/* Empty state */}
-        {accounts?.length === 0 && !isLoading ? (
+        {/* Empty state — shown when no accounts exist */}
+        {accounts?.length === 0 && !isLoading && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🏦</Text>
+            <View style={styles.emptyIconWrap}>
+              <TerahIcon name="business-outline" size={42} color={colors.midGrey} />
+            </View>
             <Text style={styles.emptyText}>{i18n.t('accounts.no_accounts')}</Text>
             <Text style={styles.emptySubtext}>{i18n.t('accounts.open_first_account')}</Text>
             <TerahButton
@@ -189,20 +211,77 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
               style={{ marginTop: 16 }}
             />
           </View>
-        ) : null}
+        )}
 
-        {/* Bottom padding */}
         <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ── Quick action sub-component ────────────────────────────────────────────────
+
+interface QuickActionProps {
+  icon:    string;
+  label:   string;
+  onPress: () => void;
+  primary?: boolean;
+}
+
+function QuickAction({ icon, label, onPress, primary }: QuickActionProps) {
+  return (
+    <TouchableOpacity
+      style={styles.quickAction}
+      onPress={onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+    >
+      <TerahIcon
+        name={icon as any}
+        size={26}
+        color={primary ? colors.teal : colors.navy}
+      />
+      <Text style={[styles.quickActionLabel, primary && styles.quickActionLabelPrimary]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+// ── Shortcut row sub-component ────────────────────────────────────────────────
+
+interface ShortcutRowProps {
+  icon:    string;
+  label:   string;
+  onPress: () => void;
+}
+
+function ShortcutRow({ icon, label, onPress }: ShortcutRowProps) {
+  return (
+    <TouchableOpacity
+      style={styles.shortcut}
+      onPress={onPress}
+      accessibilityRole="button"
+      activeOpacity={0.75}
+    >
+      <View style={styles.shortcutIconWrap}>
+        <TerahIcon name={icon as any} size={20} color={colors.teal} />
+      </View>
+      <Text style={styles.shortcutLabel}>{label}</Text>
+      <TerahIcon name="chevron-forward" size={18} color={colors.midGrey} />
+    </TouchableOpacity>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.navy,
   },
+
+  // App bar
   appBar: {
     backgroundColor: colors.navy,
     flexDirection: 'row',
@@ -216,7 +295,7 @@ const styles = StyleSheet.create({
   appBarActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   iconButton: {
     width: 44,
@@ -224,13 +303,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconText: {
-    fontSize: 22,
-  },
   badge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
+    top: 6,
+    right: 6,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
@@ -258,6 +334,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#FFFFFF',
   },
+
+  // Scrollable content
   scroll: {
     flex: 1,
     backgroundColor: colors.offWhite,
@@ -273,61 +351,169 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 16,
   },
+
+  // Balance card
   balanceCard: {
     backgroundColor: colors.navy,
     marginHorizontal: 16,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
     marginBottom: 20,
+    overflow: 'hidden',
+    // Subtle elevation
+    shadowColor: colors.navy,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  // Teal accent strip at the top of the balance card
+  balanceCardAccent: {
+    height: 4,
+    backgroundColor: colors.teal,
+    width: '40%',
+    borderRadius: 2,
+    marginTop: 0,
+  },
+  balanceCardInner: {
+    padding: 24,
+    paddingTop: 20,
   },
   balanceLabel: {
     fontFamily: 'Roboto_400Regular',
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
     marginBottom: 8,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   balanceAmount: {
     fontFamily: 'Poppins_700Bold',
-    fontSize: 32,
+    fontSize: 34,
     color: '#FFFFFF',
+    letterSpacing: -0.5,
   },
-  quickActions: {
+  historyLink: {
     flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    marginBottom: 24,
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 12,
+    alignSelf: 'flex-start',
   },
-  actionButton: {
+  historyLinkText: {
+    fontFamily: 'Roboto_500Medium',
+    fontSize: 12,
+    color: colors.teal,
+  },
+
+  // Quick actions card
+  quickActionsCard: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  quickAction: {
     flex: 1,
-    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 6,
+    minHeight: 72,
   },
+  quickDivider: {
+    width: 1,
+    backgroundColor: colors.lightGrey,
+    marginVertical: 12,
+  },
+  quickActionLabel: {
+    fontFamily: 'Poppins_500Medium',
+    fontSize: 12,
+    color: colors.navy,
+    textAlign: 'center',
+  },
+  quickActionLabelPrimary: {
+    color: colors.teal,
+  },
+
+  // Shortcut rows (Cards, Insurance)
+  shortcut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+    minHeight: 56,
+  },
+  shortcutIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: `${colors.teal}18`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  shortcutLabel: {
+    flex: 1,
+    fontFamily: 'Poppins_600SemiBold',
+    fontSize: 15,
+    color: colors.navy,
+  },
+
+  // Section header
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
     marginBottom: 12,
+    marginTop: 4,
   },
   sectionTitle: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 16,
     color: colors.navy,
   },
+  openAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   addAccountLink: {
     fontFamily: 'Roboto_500Medium',
     fontSize: 13,
     color: colors.teal,
   },
+
+  // Empty state
   emptyState: {
     alignItems: 'center',
     paddingHorizontal: 32,
     paddingTop: 32,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
+  emptyIconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.lightGrey,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyText: {
     fontFamily: 'Poppins_600SemiBold',
@@ -342,17 +528,4 @@ const styles = StyleSheet.create({
     color: colors.midGrey,
     textAlign: 'center',
   },
-  cardShortcut: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    backgroundColor: colors.white,
-    marginHorizontal: 16,
-    marginBottom:    20,
-    borderRadius:    12,
-    paddingHorizontal: 16,
-    paddingVertical:  14,
-  },
-  cardShortcutIcon:    { fontSize: 22, marginRight: 12 },
-  cardShortcutLabel:   { flex: 1, fontFamily: 'Poppins_600SemiBold', fontSize: 15, color: colors.navy },
-  cardShortcutChevron: { fontSize: 22, color: colors.midGrey },
 });

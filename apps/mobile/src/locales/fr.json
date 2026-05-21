@@ -87,7 +87,8 @@
     "accounts_section": "Mes comptes",
     "open_account": "Ouvrir un compte",
     "my_cards": "Mes cartes VISA",
-    "insurance": "Mes assurances"
+    "insurance": "Mes assurances",
+    "view_history": "Voir l'historique"
   },
   "insurance": {
     "title": "Assurances",
@@ -384,5 +385,17 @@
     "or": "ou",
     "error": "Erreur",
     "generic_error": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "language": {
+    "choose_title": "Choisissez votre langue",
+    "choose_sub": "Choose your language",
+    "french": "Français",
+    "french_sub": "Langue officielle",
+    "english": "English",
+    "english_sub": "Official language",
+    "continue_fr": "Continuer",
+    "continue_en": "Continue",
+    "section_title": "Langue",
+    "current": "Langue actuelle"
   }
 }

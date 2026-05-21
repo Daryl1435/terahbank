@@ -12,6 +12,7 @@ import {
 } from '@expo-google-fonts/poppins';
 import { Roboto_400Regular, Roboto_500Medium } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
+import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -20,9 +21,15 @@ import AnimatedSplash from '@/components/AnimatedSplash';
 SplashScreen.preventAutoHideAsync();
 
 import { useAuthStore } from '@/stores/authStore';
+import { useAppStore, LANGUAGE_PREF_KEY, LANGUAGE_SELECTED_KEY } from '@/stores/appStore';
 import { colors } from '@/utils/tokens';
+import i18n from '@/locales';
 
-// ── Auth & onboarding screens ──────────────────────────────────────────────────
+// ── Screen imports ─────────────────────────────────────────────────────────────
+
+import LanguageScreen from '@/screens/LanguageScreen';
+
+// Auth & onboarding
 import LoginScreen from '@/screens/LoginScreen';
 import RegisterScreen from '@/screens/RegisterScreen';
 import PasswordCreationScreen from '@/screens/PasswordCreationScreen';
@@ -33,34 +40,34 @@ import DeviceVerificationScreen from '@/screens/DeviceVerificationScreen';
 import KYCUploadScreen from '@/screens/KYCUploadScreen';
 import KYCPendingScreen from '@/screens/KYCPendingScreen';
 
-// ── Authenticated app screens ─────────────────────────────────────────────────
+// Authenticated app
 import DashboardScreen from '@/screens/DashboardScreen';
 import AccountDetailScreen from '@/screens/AccountDetailScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 
-// ── Account creation flows ────────────────────────────────────────────────────
+// Account creation flows
 import OpenAccountScreen from '@/screens/OpenAccountScreen';
 import OpenStandardAccountScreen from '@/screens/OpenStandardAccountScreen';
 import OpenProjectAccountScreen from '@/screens/OpenProjectAccountScreen';
 import OpenTermDepositScreen from '@/screens/OpenTermDepositScreen';
 
-// ── Transaction flows — Milestone 3.5 ────────────────────────────────────────
+// Transaction flows — Milestone 3.5
 import DepositScreen from '@/screens/DepositScreen';
 import WithdrawScreen from '@/screens/WithdrawScreen';
 import TransferScreen from '@/screens/TransferScreen';
 import TransactionHistoryScreen from '@/screens/TransactionHistoryScreen';
 import TransactionDetailScreen from '@/screens/TransactionDetailScreen';
 
-// ── Card management — Milestone 3.4 / 4.2 ────────────────────────────────────
+// Card management — Milestone 3.4 / 4.2
 import CardScreen from '@/screens/CardScreen';
 import CardDetailScreen from '@/screens/CardDetailScreen';
 import CardPaymentWebViewScreen from '@/screens/CardPaymentWebViewScreen';
 
-// ── Insurance — Milestone 6.1 ─────────────────────────────────────────────────
+// Insurance — Milestone 6.1
 import InsuranceScreen from '@/screens/InsuranceScreen';
 import InsurancePolicyDetailScreen from '@/screens/InsurancePolicyDetailScreen';
 
-// ── Notifications — Milestone 6.2 ─────────────────────────────────────────────
+// Notifications — Milestone 6.2
 import NotificationsScreen from '@/screens/NotificationsScreen';
 
 // ─── Navigation types ─────────────────────────────────────────────────────────
@@ -87,7 +94,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   AccountDetail: { accountId: string };
   Profile: undefined;
-  Notifications: undefined;       // Stub — Milestone 6
+  Notifications: undefined;
 
   // Account creation flows
   OpenAccount: undefined;
@@ -95,19 +102,19 @@ export type RootStackParamList = {
   OpenProjectAccount: undefined;
   OpenTermDeposit: undefined;
 
-  // Transaction flows — Milestone 3.5
+  // Transaction flows
   Deposit: undefined;
   Withdraw: undefined;
   Transfer: undefined;
   TransactionHistory: { accountId?: string };
   TransactionDetail: { transactionId: string; reference: string };
 
-  // Card management — Milestone 3.4 / 4.2
+  // Card management
   Cards: undefined;
   CardDetail: { cardId: string };
   CardPaymentWebView: { paymentUrl: string; transactionId: string; reference: string };
 
-  // Insurance — Milestone 6.1
+  // Insurance
   Insurance: undefined;
   InsurancePolicyDetail: { policyId: string };
 };
@@ -120,11 +127,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 30_000,        // 30s — aligns with Redis balance cache TTL
+      staleTime: 30_000,       // 30s — aligns with Redis balance cache TTL
       refetchOnWindowFocus: false,
     },
     mutations: {
-      retry: 0,                 // Never auto-retry mutations (double-charge risk)
+      retry: 0,                // Never auto-retry mutations (double-charge risk)
     },
   },
 });
@@ -144,7 +151,7 @@ function AppNavigator() {
       }}
     >
       {!isAuthenticated ? (
-        // ── Auth + onboarding stack ─────────────────────────────────────────
+        // ── Pre-auth stack ──────────────────────────────────────────────────
         <>
           <Stack.Screen name="Login"              component={LoginScreen} />
           <Stack.Screen name="Register"           component={RegisterScreen} />
@@ -168,26 +175,21 @@ function AppNavigator() {
           <Stack.Screen name="Dashboard"            component={DashboardScreen} />
           <Stack.Screen name="AccountDetail"        component={AccountDetailScreen} />
           <Stack.Screen name="Profile"              component={ProfileScreen} />
-          {/* Account creation flows */}
           <Stack.Screen name="OpenAccount"          component={OpenAccountScreen} />
           <Stack.Screen name="OpenStandardAccount"  component={OpenStandardAccountScreen} />
           <Stack.Screen name="OpenProjectAccount"   component={OpenProjectAccountScreen} />
           <Stack.Screen name="OpenTermDeposit"      component={OpenTermDepositScreen} />
-          {/* Transaction flows — Milestone 3.5 */}
-          <Stack.Screen name="Deposit"             component={DepositScreen} />
-          <Stack.Screen name="Withdraw"            component={WithdrawScreen} />
-          <Stack.Screen name="Transfer"            component={TransferScreen} />
-          <Stack.Screen name="TransactionHistory"  component={TransactionHistoryScreen} />
-          <Stack.Screen name="TransactionDetail"   component={TransactionDetailScreen} />
-          {/* Card management — Milestone 3.4 / 4.2 */}
-          <Stack.Screen name="Cards"               component={CardScreen} />
-          <Stack.Screen name="CardDetail"          component={CardDetailScreen} />
-          <Stack.Screen name="CardPaymentWebView"  component={CardPaymentWebViewScreen} options={{ gestureEnabled: false }} />
-          {/* Insurance — Milestone 6.1 */}
-          <Stack.Screen name="Insurance"              component={InsuranceScreen} />
-          <Stack.Screen name="InsurancePolicyDetail"  component={InsurancePolicyDetailScreen} />
-          {/* Notifications — Milestone 6.2 */}
-          <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Deposit"              component={DepositScreen} />
+          <Stack.Screen name="Withdraw"             component={WithdrawScreen} />
+          <Stack.Screen name="Transfer"             component={TransferScreen} />
+          <Stack.Screen name="TransactionHistory"   component={TransactionHistoryScreen} />
+          <Stack.Screen name="TransactionDetail"    component={TransactionDetailScreen} />
+          <Stack.Screen name="Cards"                component={CardScreen} />
+          <Stack.Screen name="CardDetail"           component={CardDetailScreen} />
+          <Stack.Screen name="CardPaymentWebView"   component={CardPaymentWebViewScreen} options={{ gestureEnabled: false }} />
+          <Stack.Screen name="Insurance"            component={InsuranceScreen} />
+          <Stack.Screen name="InsurancePolicyDetail" component={InsurancePolicyDetailScreen} />
+          <Stack.Screen name="Notifications"        component={NotificationsScreen} options={{ headerShown: false }} />
         </>
       )}
     </Stack.Navigator>
@@ -205,9 +207,51 @@ export default function App() {
     Roboto_400Regular,
     Roboto_500Medium,
   });
-  const [showAnimatedSplash, setShowAnimatedSplash] = useState(true);
 
-  // Hide the native splash as soon as fonts are ready, then our animated splash takes over
+  const [showAnimatedSplash, setShowAnimatedSplash] = useState(true);
+  // showLanguagePicker: true while we haven't confirmed the user has selected a language
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  // appReady: false until we've finished reading SecureStore on startup
+  const [appReady, setAppReady] = useState(false);
+
+  const language            = useAppStore((s) => s.language);
+  const setLanguage         = useAppStore((s) => s.setLanguage);
+  const setLanguageSelected = useAppStore((s) => s.setLanguageSelected);
+
+  // ── On mount: restore persisted language from SecureStore ─────────────────
+  useEffect(() => {
+    async function restoreLanguage() {
+      try {
+        const storedLang     = await SecureStore.getItemAsync(LANGUAGE_PREF_KEY);
+        const hasSelected    = await SecureStore.getItemAsync(LANGUAGE_SELECTED_KEY);
+
+        if ((storedLang === 'fr' || storedLang === 'en') && hasSelected === 'true') {
+          // Restore silently — update store + i18n without re-persisting
+          setLanguage(storedLang);
+          setLanguageSelected(true);
+          i18n.locale = storedLang;
+          setShowLanguagePicker(false);
+        } else {
+          // First launch — show the language picker
+          setShowLanguagePicker(true);
+        }
+      } catch {
+        // SecureStore unavailable — default to French and skip picker
+        setShowLanguagePicker(false);
+      } finally {
+        setAppReady(true);
+      }
+    }
+    restoreLanguage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Keep i18n.locale in sync when language changes (e.g. from Profile) ────
+  useEffect(() => {
+    i18n.locale = language;
+  }, [language]);
+
+  // Hide the native splash as soon as fonts are ready
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
@@ -216,8 +260,8 @@ export default function App() {
 
   const onSplashFinish = useCallback(() => setShowAnimatedSplash(false), []);
 
-  // Keep native splash up until fonts load
-  if (!fontsLoaded && !fontError) {
+  // Hold the blank navy screen while fonts load AND SecureStore is being read
+  if ((!fontsLoaded && !fontError) || !appReady) {
     return <View style={{ flex: 1, backgroundColor: colors.navy }} />;
   }
 
@@ -226,9 +270,20 @@ export default function App() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <StatusBar style="light" backgroundColor={colors.navy} />
-          <NavigationContainer>
-            <AppNavigator />
-          </NavigationContainer>
+
+          {showLanguagePicker ? (
+            // ── First-launch language picker (outside NavigationContainer) ──
+            <LanguageScreen onComplete={() => setShowLanguagePicker(false)} />
+          ) : (
+            // ── Normal app navigation ──────────────────────────────────────
+            // Key on `language` so the entire navigator re-mounts when the
+            // user switches language in Profile — all strings update instantly.
+            <NavigationContainer key={language}>
+              <AppNavigator />
+            </NavigationContainer>
+          )}
+
+          {/* Animated splash overlays everything until it finishes */}
           {showAnimatedSplash && <AnimatedSplash onFinish={onSplashFinish} />}
         </QueryClientProvider>
       </SafeAreaProvider>
