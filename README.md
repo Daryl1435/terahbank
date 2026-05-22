@@ -82,28 +82,59 @@ docker compose up -d
 
 ### Step 5 — Install Python dependencies
 
-```bash
+> **Important:** Run each command on its own line.
+> `venv/Scripts/activate` sets environment variables in the current shell session —
+> chaining it with `&&` does NOT work (the activation is lost before the next command runs).
+
+```powershell
 cd apps/api
+```
+```powershell
 python -m venv venv
-source venv/bin/activate       # Windows: venv\Scripts\activate
+```
+```powershell
+# Windows (PowerShell or CMD) — activates the virtual environment
+venv/Scripts/activate
+```
+```powershell
+# macOS / Linux — use this instead
+# source venv/bin/activate
+```
+```powershell
+# Install all backend dependencies into the venv
 pip install -r requirements.txt
 ```
 
 ### Step 6 — Run database migrations
 
-```bash
+```powershell
+# Make sure the venv is still active (you should see (venv) in your prompt)
+# Make sure Docker services are running before this step
 cd apps/api
+```
+```powershell
+# Creates all tables defined in alembic/versions/ in your local PostgreSQL database
 alembic upgrade head
-# Creates all tables in your local PostgreSQL database
 ```
 
 ### Step 7 — Start the API
 
-```bash
+```powershell
+# Always run these three commands separately — never chain them with &&
+# Step 1: go to the API folder
 cd apps/api
+```
+```powershell
+# Step 2: activate the Python virtual environment
+# You will see (venv) appear at the start of your prompt when this works
+venv/Scripts/activate
+```
+```powershell
+# Step 3: start the API server with hot-reload enabled
 uvicorn main:app --reload
-# API: http://localhost:8000
-# Docs: http://localhost:8000/docs
+
+# API is now running at:  http://localhost:8000
+# Swagger docs at:        http://localhost:8000/docs  (development only)
 ```
 
 ### Step 8 — Open Claude Code
@@ -122,10 +153,27 @@ claude
 
 ### Start your session
 
-```bash
-docker compose up -d                          # ensure services are running
-cd apps/api && source venv/bin/activate       # activate Python env
-uvicorn main:app --reload                     # start API
+> Run each command on its own line — do **not** chain them with `&&`.
+> `venv/Scripts/activate` must run in isolation; chaining loses the activation.
+
+```powershell
+# 1. Start PostgreSQL (port 5432) and Redis (port 6379) — must be first
+#    Docker Desktop must be open before running this
+docker compose up -d
+```
+```powershell
+# 2. Move into the API folder
+cd apps/api
+```
+```powershell
+# 3. Activate the Python virtual environment
+#    You will see (venv) in your prompt when successful
+venv/Scripts/activate
+```
+```powershell
+# 4. Start the API with hot-reload (saves file → server restarts automatically)
+uvicorn main:app --reload
+# API running at http://localhost:8000
 ```
 
 Then open Claude Code and begin with:
@@ -137,30 +185,79 @@ Then open Claude Code and begin with:
 
 ### Start each app
 
-| App | Command | URL |
-|---|---|---|
-| API | `cd apps/api && uvicorn main:app --reload` | http://localhost:8000 |
-| Mobile (Android) | `cd apps/mobile && expo start --android` | Expo dev client |
-| Web portal | `cd apps/web && npm run dev` | http://localhost:3000 |
-| Admin panel | `cd apps/admin && npm run dev` | http://localhost:3001 |
+> For the API, always activate the venv first (separate command).
+> The other apps (mobile, web, admin) use Node — no venv needed.
+
+**API** — three steps, each on its own line:
+```powershell
+cd apps/api
+venv/Scripts/activate      # activates venv — (venv) appears in prompt
+uvicorn main:app --reload  # http://localhost:8000  |  docs: http://localhost:8000/docs
+```
+
+**Mobile (Android emulator):**
+```powershell
+cd apps/mobile
+expo start --android       # opens Expo dev client on connected Android device / emulator
+```
+
+**Web portal:**
+```powershell
+cd apps/web
+npm run dev                # http://localhost:3000
+```
+
+**Admin panel:**
+```powershell
+cd apps/admin
+npm run dev                # http://localhost:3001
+```
 
 ### Run tests
 
-```bash
-cd apps/api && pytest tests/ -v                                    # all tests
-cd apps/api && pytest tests/unit/ --cov=modules --cov-fail-under=80  # unit + coverage
-cd apps/api && pytest tests/integration/ -v                        # integration only
+> Activate the venv first before running any pytest command.
+
+```powershell
+cd apps/api
+venv/Scripts/activate
+```
+```powershell
+# Run every test (unit + integration)
+pytest tests/ -v
+```
+```powershell
+# Unit tests only with coverage check — must stay above 80%
+pytest tests/unit/ --cov=modules --cov-fail-under=80
+```
+```powershell
+# Integration tests only (requires Docker services running)
+pytest tests/integration/ -v
 ```
 
 ### Other common commands
 
-```bash
-cd apps/api && alembic upgrade head          # run pending migrations
-cd apps/api && alembic downgrade -1          # roll back one migration
-cd apps/api && ruff check .                  # lint Python
-cd apps/api && mypy modules/                 # type check Python
-docker compose down                          # stop local services
-docker compose --profile tools up -d        # also start pgAdmin (port 5050)
+> For API commands, make sure you are inside `apps/api` with the venv active.
+
+```powershell
+cd apps/api
+venv/Scripts/activate
+```
+```powershell
+alembic upgrade head      # apply all pending database migrations
+```
+```powershell
+alembic downgrade -1      # roll back the last migration (use with care)
+```
+```powershell
+ruff check .              # lint all Python files
+```
+```powershell
+mypy modules/             # run the type checker on all modules
+```
+```powershell
+# Docker service commands — run from the project ROOT (not apps/api)
+docker compose down                       # stop PostgreSQL and Redis
+docker compose --profile tools up -d     # also start pgAdmin on port 5050
 ```
 
 ### Context hygiene — important
@@ -353,13 +450,17 @@ See `.env.example` in the project root for a full template.
 
 | Problem | Fix |
 |---|---|
-| API won't start | Run `docker compose up -d`. Check DATABASE_URL in `apps/api/.env` matches docker-compose credentials. |
-| Migration fails | Run `alembic history` to see state. Run `alembic downgrade -1` to roll back one step. |
-| Tests failing | Run `pytest -v --tb=short`. Confirm docker services are running. |
+| `ModuleNotFoundError: No module named 'pydantic_settings'` | The venv is not active. Run `venv/Scripts/activate` on its own line first, then `uvicorn main:app --reload`. |
+| `venv` is not recognized | You are in CMD, not PowerShell. Use `venv\Scripts\activate.bat` (backslash + .bat extension). |
+| Redis connection refused (port 6379) | Docker Desktop is not running or containers are stopped. Start Docker Desktop, then run `docker compose up -d` from the project root. |
+| API won't start | Run `docker compose up -d` first. Then check `DATABASE_URL` in `apps/api/.env` matches the docker-compose credentials. |
+| `&&` chaining breaks activation | `venv/Scripts/activate` must run alone — it sets shell environment variables that `&&` cannot forward. Always run `cd`, `activate`, and `uvicorn` as three separate commands. |
+| Migration fails | Run `alembic history` to see state. Run `alembic downgrade -1` to roll back one step. Make sure Docker is running and the venv is active. |
+| Tests failing | Activate the venv, then run `pytest -v --tb=short`. Confirm docker services are running with `docker compose ps`. |
 | Claude Code ignoring rules | The CLAUDE.md may have gotten too long. Run `/clear` and reload the session. |
 | MoMo webhook not firing locally | Install ngrok (`npm install -g ngrok`), run `ngrok http 8000`, update `MTN_MOMO_CALLBACK_URL` in `.env`. |
 | Expo can't connect to API | Ensure `EXPO_PUBLIC_API_BASE_URL` in `apps/mobile/.env` points to your machine's local IP, not localhost (Android emulator cannot reach localhost). |
-| Port already in use | Run `lsof -i :8000` (Mac/Linux) or `netstat -ano | findstr :8000` (Windows) to find and kill the process. |
+| Port already in use | Run `netstat -ano \| findstr :8000` (Windows) or `lsof -i :8000` (Mac/Linux) to find and kill the process. |
 
 ---
 
