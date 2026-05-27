@@ -111,7 +111,7 @@ export default function DashboardScreen({ navigation }: DashboardScreenProps) {
       >
 
         {/* Greeting */}
-        <Text style={styles.greeting}>{greeting}</Text>
+        <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">{greeting}</Text>
 
         {/* ── Total balance card (FR-046) ──────────────────────────────────── */}
         <View style={styles.balanceCard}>
@@ -288,9 +288,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 12,
-    height: 64,
+    paddingVertical: 6,
+    height: 56,
   },
   appBarActions: {
     flexDirection: 'row',
@@ -316,7 +315,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   badgeText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 9,
     fontFamily: 'Poppins_600SemiBold',
     lineHeight: 14,
@@ -332,7 +331,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 15,
-    color: '#FFFFFF',
+    color: colors.white,
   },
 
   // Scrollable content
@@ -389,7 +388,7 @@ const styles = StyleSheet.create({
   balanceAmount: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 34,
-    color: '#FFFFFF',
+    color: colors.white,
     letterSpacing: -0.5,
   },
   historyLink: {

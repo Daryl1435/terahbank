@@ -86,12 +86,14 @@ class ChangePasswordRequest(BaseModel):
 class RegisterResponseData(BaseModel):
     user_id: str
     otp_required: bool = True
+    otp_dev: str | None = None  # DEV only — OTP included when APP_ENV=development
 
 
 class LoginInitResponseData(BaseModel):
     """Returned from POST /auth/login — user must now complete 2FA."""
     user_id: str
     otp_required: bool = True
+    otp_dev: str | None = None  # DEV only — OTP included when APP_ENV=development
 
 
 class AuthTokenResponseData(BaseModel):
@@ -110,6 +112,16 @@ class RefreshResponseData(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+
+
+class UserProfileResponseData(BaseModel):
+    """Returned by GET /auth/me."""
+    user_id: str
+    full_name: str
+    phone_number: str
+    email: str
+    kyc_status: str
+    preferred_language: str
 
 
 # ─── PIN schemas (FR-006/036) ─────────────────────────────────────────────────

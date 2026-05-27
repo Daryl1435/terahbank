@@ -240,7 +240,7 @@ export default function NotificationsScreen({ navigation }: NotificationsScreenP
                 onValueChange={(val) => handleTogglePref(key, val)}
                 trackColor={{ false: colors.lightGrey, true: colors.teal }}
                 thumbColor="#fff"
-                disabled={updatePrefs.isPending || prefs == null}
+                disabled={updatePrefs.isPending}
               />
             </View>
           ))}

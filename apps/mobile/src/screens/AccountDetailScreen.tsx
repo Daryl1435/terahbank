@@ -104,7 +104,7 @@ export default function AccountDetailScreen({ navigation, route }: AccountDetail
       <View style={styles.infoCard}>
         <View style={styles.infoRow}>
           <Text style={styles.infoKey}>{i18n.t('accounts.account_number_label')}</Text>
-          <Text style={styles.infoValue}>{account.account_number}</Text>
+          <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">{account.account_number}</Text>
         </View>
         <View style={styles.infoRow}>
           <Text style={styles.infoKey}>{i18n.t('accounts.created_on')}</Text>
@@ -134,7 +134,7 @@ export default function AccountDetailScreen({ navigation, route }: AccountDetail
         <View style={styles.section}>
           {/* Project name */}
           {account.project_name ? (
-            <Text style={styles.projectName}>{account.project_name}</Text>
+            <Text style={styles.projectName} numberOfLines={2} ellipsizeMode="tail">{account.project_name}</Text>
           ) : null}
 
           {/* Progress bar — FR-017 */}
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   infoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   progressSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,

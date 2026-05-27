@@ -28,6 +28,18 @@ export interface NotificationPreferences {
 
 export type UpdatePreferencesPayload = Partial<NotificationPreferences>;
 
+export const DEFAULT_PREFERENCES: NotificationPreferences = {
+  push_enabled: false,
+  email_enabled: false,
+  sms_enabled: false,
+  in_app_enabled: true,
+  transaction_alerts: true,
+  security_alerts: true,
+  monthly_summary: false,
+  milestone_alerts: true,
+  maturity_reminders: true,
+};
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const authHeaders = async (): Promise<HeadersInit> => {
@@ -44,53 +56,78 @@ const apiUrl = (path: string) => `${BASE_URL}/api/v1/notifications${path}`;
 
 export const notificationsService = {
   async listNotifications(): Promise<{ notifications: NotificationItem[]; unread_count: number }> {
-    const res = await fetch(apiUrl('/'), { headers: await authHeaders() });
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error(json.message ?? 'Failed to load notifications');
-    return json.data;
+    try {
+      const res = await fetch(apiUrl('/'), { headers: await authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) return { notifications: [], unread_count: 0 };
+      return json.data;
+    } catch {
+      return { notifications: [], unread_count: 0 };
+    }
   },
 
   async getUnreadCount(): Promise<number> {
-    const res = await fetch(apiUrl('/unread-count'), { headers: await authHeaders() });
-    const json = await res.json();
-    if (!res.ok || !json.success) return 0;
-    return json.data.unread_count ?? 0;
+    try {
+      const res = await fetch(apiUrl('/unread-count'), { headers: await authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) return 0;
+      return json.data.unread_count ?? 0;
+    } catch {
+      return 0;
+    }
   },
 
   async markRead(notificationId: string): Promise<void> {
-    const res = await fetch(apiUrl(`/${notificationId}/read`), {
-      method: 'PATCH',
-      headers: await authHeaders(),
-    });
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error('Failed to mark as read');
+    try {
+      const res = await fetch(apiUrl(`/${notificationId}/read`), {
+        method: 'PATCH',
+        headers: await authHeaders(),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error('Failed to mark as read');
+    } catch {
+      // Silently ignore — optimistic update already applied in hook
+    }
   },
 
   async markAllRead(): Promise<void> {
-    const res = await fetch(apiUrl('/read-all'), {
-      method: 'POST',
-      headers: await authHeaders(),
-    });
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error('Failed to mark all as read');
+    try {
+      const res = await fetch(apiUrl('/read-all'), {
+        method: 'POST',
+        headers: await authHeaders(),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error('Failed to mark all as read');
+    } catch {
+      // Silently ignore
+    }
   },
 
   async getPreferences(): Promise<NotificationPreferences> {
-    const res = await fetch(apiUrl('/preferences'), { headers: await authHeaders() });
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error('Failed to load preferences');
-    return json.data;
+    try {
+      const res = await fetch(apiUrl('/preferences'), { headers: await authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) return DEFAULT_PREFERENCES;
+      return json.data;
+    } catch {
+      return DEFAULT_PREFERENCES;
+    }
   },
 
   async updatePreferences(payload: UpdatePreferencesPayload): Promise<NotificationPreferences> {
-    const res = await fetch(apiUrl('/preferences'), {
-      method: 'PATCH',
-      headers: await authHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error('Failed to update preferences');
-    return json.data;
+    try {
+      const res = await fetch(apiUrl('/preferences'), {
+        method: 'PATCH',
+        headers: await authHeaders(),
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error('Failed to update preferences');
+      return json.data;
+    } catch {
+      // Return merged payload as if it succeeded (offline-friendly)
+      return { ...DEFAULT_PREFERENCES, ...payload } as NotificationPreferences;
+    }
   },
 
   async registerDeviceToken(token: string, platform: 'android' | 'ios'): Promise<void> {

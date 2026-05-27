@@ -25,7 +25,13 @@ const REQUIREMENTS: Requirement[] = [
   { key: 'special',   label: 'req_special',    test: (p) => /[^A-Za-z0-9]/.test(p) },
 ];
 
-const STRENGTH_COLORS = ['#E53E3E', '#FFB020', '#FFB020', '#00B4D8', '#00C48C'] as const;
+const STRENGTH_COLORS = [
+  colors.error,    // 0 — very weak
+  colors.warning,  // 1
+  colors.warning,  // 2
+  colors.teal,     // 3
+  colors.success,  // 4 — strong
+] as const;
 
 const strengthLabel = (score: number): string => {
   if (score <= 1) return i18n.t('auth.strength_weak');

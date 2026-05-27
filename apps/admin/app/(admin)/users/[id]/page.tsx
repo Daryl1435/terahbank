@@ -4,22 +4,19 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { getUser, updateUserStatus } from '@/lib/api';
 import { canMutate } from '@/lib/auth';
 import { formatDate, formatXAF, maskPhone } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import Badge, { statusVariant } from '@/components/Badge';
 import LoadingSpinner from '@/components/LoadingSpinner';
-
-const ACCOUNT_TYPE_LABELS: Record<string, string> = {
-  standard:     'Standard',
-  project:      'Project (Vault)',
-  term_deposit: 'Term Deposit',
-};
 
 export default function UserDetailPage() {
   const params      = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const userId      = params.id;
+  const { t } = useTranslation();
 
   const [confirmAction, setConfirmAction] = useState<'active' | 'suspended' | 'closed' | null>(null);
 
@@ -49,9 +46,10 @@ export default function UserDetailPage() {
   if (isError || !data?.data) {
     return (
       <div className="p-8">
-        <p className="text-error">User not found.</p>
-        <Link href="/users" className="text-teal text-sm mt-2 inline-block hover:underline">
-          ← Back to users
+        <p className="text-error">{t('userDetail.notFound')}</p>
+        <Link href="/users" className="text-teal text-sm mt-2 inline-flex items-center gap-1 hover:underline">
+          <ArrowLeft className="w-4 h-4" />
+          {t('userDetail.backToUsers')}
         </Link>
       </div>
     );
@@ -60,11 +58,13 @@ export default function UserDetailPage() {
   const user         = data.data;
   const mutateAllowed = canMutate();
 
+  const accountsLabel = t('userDetail.accounts').replace('{count}', String(user.accounts.length));
+
   return (
     <div className="p-8 max-w-4xl">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-mid-grey mb-6">
-        <Link href="/users" className="hover:text-teal transition-colors">Users</Link>
+        <Link href="/users" className="hover:text-teal transition-colors">{t('users.title')}</Link>
         <span>›</span>
         <span className="text-dark-grey">{user.full_name}</span>
       </div>
@@ -83,22 +83,22 @@ export default function UserDetailPage() {
 
       {/* User info card */}
       <div className="bg-white rounded-xl shadow-card p-6 mb-6">
-        <h2 className="font-poppins font-semibold text-base text-navy mb-4">Personal information</h2>
+        <h2 className="font-poppins font-semibold text-base text-navy mb-4">{t('userDetail.personalInfo')}</h2>
         <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
           <div>
-            <dt className="text-mid-grey">Email</dt>
+            <dt className="text-mid-grey">{t('userDetail.email')}</dt>
             <dd className="text-dark-grey font-medium">{user.email}</dd>
           </div>
           <div>
-            <dt className="text-mid-grey">Phone</dt>
+            <dt className="text-mid-grey">{t('userDetail.phone')}</dt>
             <dd className="text-dark-grey font-medium font-mono">{maskPhone(user.phone_number)}</dd>
           </div>
           <div>
-            <dt className="text-mid-grey">Preferred language</dt>
+            <dt className="text-mid-grey">{t('userDetail.preferredLang')}</dt>
             <dd className="text-dark-grey font-medium uppercase">{user.preferred_language}</dd>
           </div>
           <div>
-            <dt className="text-mid-grey">Joined</dt>
+            <dt className="text-mid-grey">{t('userDetail.joined')}</dt>
             <dd className="text-dark-grey font-medium">{formatDate(user.created_at)}</dd>
           </div>
         </dl>
@@ -106,28 +106,24 @@ export default function UserDetailPage() {
 
       {/* Accounts */}
       <div className="bg-white rounded-xl shadow-card p-6 mb-6">
-        <h2 className="font-poppins font-semibold text-base text-navy mb-4">
-          Accounts ({user.accounts.length})
-        </h2>
+        <h2 className="font-poppins font-semibold text-base text-navy mb-4">{accountsLabel}</h2>
         {user.accounts.length === 0 ? (
-          <p className="text-mid-grey text-sm">No accounts opened.</p>
+          <p className="text-mid-grey text-sm">{t('userDetail.noAccounts')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm admin-table">
               <thead>
                 <tr>
-                  <th className="text-left px-3 py-2">Type</th>
-                  <th className="text-left px-3 py-2">Number</th>
-                  <th className="text-right px-3 py-2">Balance</th>
-                  <th className="text-left px-3 py-2">Status</th>
+                  <th className="text-left px-3 py-2">{t('userDetail.table.type')}</th>
+                  <th className="text-left px-3 py-2">{t('userDetail.table.number')}</th>
+                  <th className="text-right px-3 py-2">{t('userDetail.table.balance')}</th>
+                  <th className="text-left px-3 py-2">{t('userDetail.table.status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {user.accounts.map((acc) => (
                   <tr key={acc.account_id} className="border-t border-light-grey">
-                    <td className="px-3 py-2 text-dark-grey">
-                      {ACCOUNT_TYPE_LABELS[acc.account_type] ?? acc.account_type}
-                    </td>
+                    <td className="px-3 py-2 text-dark-grey capitalize">{acc.account_type}</td>
                     <td className="px-3 py-2 font-mono text-xs text-mid-grey">{acc.account_number}</td>
                     <td className="px-3 py-2 text-right font-medium text-navy">{formatXAF(acc.balance)}</td>
                     <td className="px-3 py-2">
@@ -144,19 +140,20 @@ export default function UserDetailPage() {
       {/* Status management */}
       {mutateAllowed && (
         <div className="bg-white rounded-xl shadow-card p-6">
-          <h2 className="font-poppins font-semibold text-base text-navy mb-4">Account management</h2>
+          <h2 className="font-poppins font-semibold text-base text-navy mb-4">{t('userDetail.accountMgmt')}</h2>
 
           {mutation.isError && (
             <p className="text-error text-sm mb-3">
-              {(mutation.error as Error)?.message ?? 'Failed to update account.'}
+              {(mutation.error as Error)?.message ?? t('userDetail.loadError')}
             </p>
           )}
 
           {confirmAction ? (
             <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
               <p className="text-sm text-dark-grey mb-4">
-                Confirm action: <strong>{confirmAction}</strong> for{' '}
-                <strong>{user.full_name}</strong>?
+                {t('userDetail.confirmAction')
+                  .replace('{action}', confirmAction)
+                  .replace('{name}',   user.full_name)}
               </p>
               <div className="flex gap-3">
                 <button
@@ -165,13 +162,13 @@ export default function UserDetailPage() {
                   className="px-4 py-2 bg-navy text-white rounded-lg text-sm font-medium hover:bg-dark-navy transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {mutation.isPending && <LoadingSpinner />}
-                  Confirm
+                  {t('userDetail.confirm')}
                 </button>
                 <button
                   onClick={() => setConfirmAction(null)}
                   className="px-4 py-2 border border-light-grey rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
                 >
-                  Cancel
+                  {t('userDetail.cancel')}
                 </button>
               </div>
             </div>
@@ -182,7 +179,7 @@ export default function UserDetailPage() {
                   onClick={() => setConfirmAction('active')}
                   className="px-4 py-2 bg-success text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Reactivate account
+                  {t('userDetail.reactivate')}
                 </button>
               )}
               {user.account_status !== 'suspended' && (
@@ -190,7 +187,7 @@ export default function UserDetailPage() {
                   onClick={() => setConfirmAction('suspended')}
                   className="px-4 py-2 bg-warning text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Suspend
+                  {t('userDetail.suspend')}
                 </button>
               )}
               {user.account_status !== 'closed' && (
@@ -198,7 +195,7 @@ export default function UserDetailPage() {
                   onClick={() => setConfirmAction('closed')}
                   className="px-4 py-2 bg-error text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                 >
-                  Close account
+                  {t('userDetail.closeAccount')}
                 </button>
               )}
             </div>

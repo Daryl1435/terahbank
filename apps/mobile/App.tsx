@@ -70,6 +70,10 @@ import InsurancePolicyDetailScreen from '@/screens/InsurancePolicyDetailScreen';
 // Notifications — Milestone 6.2
 import NotificationsScreen from '@/screens/NotificationsScreen';
 
+// Profile sub-screens
+import ChangePasswordScreen from '@/screens/ChangePasswordScreen';
+import BiometricSettingsScreen from '@/screens/BiometricSettingsScreen';
+
 // ─── Navigation types ─────────────────────────────────────────────────────────
 
 export type RootStackParamList = {
@@ -83,7 +87,7 @@ export type RootStackParamList = {
     city?: string;
     address?: string;
   };
-  OTP: { userId: string; purpose: 'verify' | 'login' };
+  OTP: { userId: string; purpose: 'verify' | 'login'; otpDev?: string };
   PINSetup: undefined;
   BiometricSetup: undefined;
   DeviceVerification: { userId: string; kycStatus: string };
@@ -117,6 +121,10 @@ export type RootStackParamList = {
   // Insurance
   Insurance: undefined;
   InsurancePolicyDetail: { policyId: string };
+
+  // Profile sub-screens
+  ChangePassword: undefined;
+  BiometricSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -190,6 +198,8 @@ function AppNavigator() {
           <Stack.Screen name="Insurance"            component={InsuranceScreen} />
           <Stack.Screen name="InsurancePolicyDetail" component={InsurancePolicyDetailScreen} />
           <Stack.Screen name="Notifications"        component={NotificationsScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ChangePassword"       component={ChangePasswordScreen} />
+          <Stack.Screen name="BiometricSettings"    component={BiometricSettingsScreen} />
         </>
       )}
     </Stack.Navigator>

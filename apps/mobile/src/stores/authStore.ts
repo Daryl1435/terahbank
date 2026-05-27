@@ -47,9 +47,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   clearAuth: async () => {
-    await storage.delete('access_token');
-    await storage.delete('refresh_token');
-    set({ userId: null, isAuthenticated: false, kycStatus: null });
+    // Update state first so the UI navigates away immediately
+    set({ userId: null, fullName: null, isAuthenticated: false, kycStatus: null });
+    // Best-effort token cleanup — UI has already transitioned
+    void storage.delete('access_token').catch(() => {});
+    void storage.delete('refresh_token').catch(() => {});
   },
 }));
 

@@ -1,6 +1,14 @@
 # TerahBank Admin — Next.js Back-Office
 Internal tool for TerahBank operations staff. TypeScript strict mode.
 
+## Language / i18n
+- Default language: **English** (admin is an internal ops tool; staff use English)
+- French toggle available in sidebar (Globe icon, bottom-left)
+- Locale files: `locales/en.ts` (source of truth) and `locales/fr.ts`
+- i18n system: `lib/i18n.ts` — lightweight `LanguageContext` + `useTranslation()` hook, no external library
+- Language preference persisted in `localStorage` key `admin_lang`
+- All user-facing strings must use `t('key')` — never hardcode English or French directly in JSX
+
 ## RBAC — enforce on every admin page and action
 ```typescript
 // Three roles — check on every protected route

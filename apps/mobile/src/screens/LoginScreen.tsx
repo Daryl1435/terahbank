@@ -53,7 +53,11 @@ export function LoginScreen({ navigation }: LoginScreenProps) {
       { identifier: identifier.trim(), password },
       {
         onSuccess: (data) => {
-          navigation.navigate('OTP', { userId: data.user_id, purpose: 'login' });
+          navigation.navigate('OTP', {
+            userId: data.user_id,
+            purpose: 'login',
+            otpDev: data.otp_dev,
+          });
         },
         onError: (err: any) => {
           setFormError(err.message ?? i18n.t('errors.generic'));

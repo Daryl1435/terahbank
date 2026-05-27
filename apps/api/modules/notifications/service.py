@@ -52,18 +52,35 @@ async def enqueue_notification(job_name: str, data: dict) -> None:
 
 async def dispatch_otp_sms(phone_e164: str, otp_code: str) -> None:
     """
-    Send OTP via SMS. Raises SMSBudgetExhaustedError if monthly limit is reached.
+    Send OTP via SMS synchronously (not queued — OTPs are time-sensitive).
+    Raises SMSBudgetExhaustedError if the monthly limit or Twilio rate limit is reached.
     Callers (auth service) must catch this and return HTTP 503.
+
+    In APP_ENV=development the OTP is always logged so it can be used even if
+    SMS delivery fails. SMSBudgetExhaustedError is still re-raised so the API
+    returns 503 — this makes the mobile show the OTP from the response field
+    `otp_dev` instead of waiting for an SMS that will never arrive.
     """
-    from core.sms import SMSBudgetExhaustedError, get_sms_usage
-    used, limit = await get_sms_usage()
-    if limit > 0 and used >= limit:
-        raise SMSBudgetExhaustedError(f"Monthly SMS limit of {limit} reached ({used} used)")
-    await enqueue_notification("send_sms", {
-        "to": phone_e164,
-        "message": f"Votre code TerahBank est : {otp_code}. Valable 5 minutes. Ne le partagez jamais.",
-        "msg_type": "OTP",
-    })
+    from core.config import settings
+    from core.sms import SMSBudgetExhaustedError, send_otp_sms
+
+    # Always log in dev so the OTP is usable from the terminal even when SMS fails
+    if settings.APP_ENV == "development":
+        logger.warning("╔══════════════════════════════╗")
+        logger.warning("║  DEV OTP  %-6s  →  %-6s  ║", phone_e164[-6:], otp_code)
+        logger.warning("╚══════════════════════════════╝")
+
+    try:
+        await send_otp_sms(phone_e164, otp_code)
+    except SMSBudgetExhaustedError:
+        # Always surface budget/rate-limit errors so auth returns 503
+        raise
+    except Exception as exc:
+        if settings.APP_ENV == "development":
+            # Non-budget SMS failures in dev are non-fatal — OTP is already logged
+            logger.warning("Dev SMS delivery failed (use otp_dev from response): %s", exc)
+        else:
+            raise
 
 
 async def dispatch_push_and_inapp(

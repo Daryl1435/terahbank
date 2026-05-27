@@ -172,7 +172,7 @@ export default function InsuranceScreen({ navigation }: InsuranceScreenProps) {
                   <View style={styles.policyCardFooter}>
                     <Text style={styles.premiumLabel}>{i18n.t('insurance.monthly_premium')}</Text>
                     <Text style={styles.premiumAmount}>
-                      {formatXAF(policy.monthly_premium_xaf)}/mois
+                      {formatXAF(policy.monthly_premium_xaf)}{i18n.t('common.per_month')}
                     </Text>
                     {policy.days_until_expiry !== null && (
                       <Text
@@ -232,7 +232,7 @@ export default function InsuranceScreen({ navigation }: InsuranceScreenProps) {
                     <View>
                       <Text style={styles.premiumLabel}>{i18n.t('insurance.monthly_premium')}</Text>
                       <Text style={styles.productPremium}>
-                        {formatXAF(product.monthly_premium_xaf)}/mois
+                        {formatXAF(product.monthly_premium_xaf)}{i18n.t('common.per_month')}
                       </Text>
                     </View>
                     <View>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold',
   },
   appBarTitle: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 18,
     fontFamily: 'Poppins_600SemiBold',
   },
@@ -366,13 +366,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   catalogCTAText: {
-    color: '#fff',
+    color: colors.white,
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 14,
   },
   // Policy card
   policyCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -411,10 +411,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   statusActive: {
-    backgroundColor: '#E6FFF5',
+    backgroundColor: colors.successBg,
   },
   statusCancelled: {
-    backgroundColor: '#FFEAEA',
+    backgroundColor: colors.errorBg,
   },
   statusText: {
     fontFamily: 'Roboto_500Medium',
@@ -464,7 +464,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   productCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   enrollButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontFamily: 'Poppins_600SemiBold',
     fontSize: 14,
   },

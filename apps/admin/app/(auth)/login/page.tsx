@@ -2,13 +2,16 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { adminLogin } from '@/lib/api';
 import { saveAuth } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 function LoginForm() {
   const router       = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
 
   const [step,     setStep]     = useState<'credentials' | 'totp'>('credentials');
   const [email,    setEmail]    = useState('');
@@ -25,13 +28,13 @@ function LoginForm() {
     setLoading(true);
     try {
       const res = await adminLogin(email, password);
-      if (!res.success) throw new Error('Login failed.');
+      if (!res.success) throw new Error(t('login.errorLogin'));
 
       const { access_token, role } = res.data;
       setPendingToken({ token: access_token, role });
       setStep('totp');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Connection error. Please try again.');
+      setError(err instanceof Error ? err.message : t('login.errorGeneric'));
     } finally {
       setLoading(false);
     }
@@ -43,7 +46,7 @@ function LoginForm() {
     setError(null);
 
     if (!/^\d{6}$/.test(totp)) {
-      setError('TOTP code must be exactly 6 digits.');
+      setError(t('login.errorTotp'));
       return;
     }
 
@@ -68,13 +71,13 @@ function LoginForm() {
             className="h-16 mx-auto mb-3"
           />
           <p className="font-poppins font-semibold text-white text-xl">TerahBank</p>
-          <p className="text-mid-grey text-sm mt-1">Admin Panel</p>
+          <p className="text-mid-grey text-sm mt-1">{t('login.adminPanel')}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-modal p-8">
           {step === 'credentials' ? (
             <>
-              <h2 className="font-poppins font-semibold text-navy text-lg mb-6">Sign In</h2>
+              <h2 className="font-poppins font-semibold text-navy text-lg mb-6">{t('login.signIn')}</h2>
 
               {error && (
                 <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm">
@@ -85,7 +88,7 @@ function LoginForm() {
               <form onSubmit={handleCredentials} noValidate>
                 <div className="mb-4">
                   <label htmlFor="email" className="block text-sm font-medium text-dark-grey mb-1">
-                    Email address
+                    {t('login.emailAddress')}
                   </label>
                   <input
                     id="email"
@@ -101,7 +104,7 @@ function LoginForm() {
 
                 <div className="mb-6">
                   <label htmlFor="password" className="block text-sm font-medium text-dark-grey mb-1">
-                    Password
+                    {t('login.password')}
                   </label>
                   <input
                     id="password"
@@ -121,7 +124,7 @@ function LoginForm() {
                   className="w-full bg-teal text-white py-2.5 rounded-lg font-poppins font-semibold text-sm hover:bg-teal-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? <LoadingSpinner /> : null}
-                  Continue
+                  {t('login.continue')}
                 </button>
               </form>
             </>
@@ -131,19 +134,22 @@ function LoginForm() {
                 onClick={() => { setStep('credentials'); setError(null); setTotp(''); }}
                 className="text-mid-grey text-sm mb-4 hover:text-teal transition-colors flex items-center gap-1"
               >
-                ← Back
+                <ArrowLeft className="w-4 h-4" />
+                {t('login.back')}
               </button>
 
               <h2 className="font-poppins font-semibold text-navy text-lg mb-2">
-                Two-Factor Verification
+                {t('login.twoFactor')}
               </h2>
               <p className="text-mid-grey text-sm mb-3">
-                Enter the 6-digit code from your authenticator app.
+                {t('login.twoFactorDesc')}
               </p>
-              <p className="text-xs text-teal bg-teal/10 border border-teal/20 rounded-lg px-3 py-2 mb-5">
-                Dev mode: TOTP not yet enforced — enter any 6 digits (e.g.{' '}
-                <strong>000000</strong>).
-              </p>
+
+              {process.env.NODE_ENV === 'development' && (
+                <p className="text-xs text-teal bg-teal/10 border border-teal/20 rounded-lg px-3 py-2 mb-5">
+                  {t('login.devNotice')}
+                </p>
+              )}
 
               {error && (
                 <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/30 text-error text-sm">
@@ -154,7 +160,7 @@ function LoginForm() {
               <form onSubmit={handleTotp} noValidate>
                 <div className="mb-6">
                   <label htmlFor="totp" className="block text-sm font-medium text-dark-grey mb-1">
-                    Authenticator code
+                    {t('login.totpCode')}
                   </label>
                   <input
                     id="totp"
@@ -177,7 +183,7 @@ function LoginForm() {
                   className="w-full bg-teal text-white py-2.5 rounded-lg font-poppins font-semibold text-sm hover:bg-teal-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? <LoadingSpinner /> : null}
-                  Sign In
+                  {t('login.signInBtn')}
                 </button>
               </form>
             </>
@@ -185,7 +191,7 @@ function LoginForm() {
         </div>
 
         <p className="text-mid-grey text-xs text-center mt-6">
-          Access restricted to authorized TerahBank personnel only.
+          {t('login.restricted')}
         </p>
       </div>
     </div>

@@ -19,6 +19,8 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,6 +29,8 @@ import { useWithdraw } from '@/hooks/useTransactions';
 import { useTotalBalance } from '@/hooks/useBalance';
 import { PINKeypad } from '@/components/PINKeypad';
 import { TerahButton } from '@/components/TerahButton';
+import { ChannelLogo } from '@/components/ChannelLogo';
+import type { PaymentChannel } from '@/components/ChannelLogo';
 import { colors, spacing, radius } from '@/utils/tokens';
 import { formatXAF } from '@/utils/formatXAF';
 import { authService } from '@/services/auth';
@@ -41,9 +45,9 @@ interface WithdrawScreenProps {
 type Channel = 'mtn_momo' | 'orange_money';
 type Step = 1 | 2 | 3;
 
-const CHANNELS: Array<{ id: Channel; labelKey: string; icon: string }> = [
-  { id: 'mtn_momo',     labelKey: 'transactions.deposit_channel_momo',   icon: '📱' },
-  { id: 'orange_money', labelKey: 'transactions.deposit_channel_orange',  icon: '🟠' },
+const CHANNELS: Array<{ id: Channel; labelKey: string }> = [
+  { id: 'mtn_momo',     labelKey: 'transactions.deposit_channel_momo'  },
+  { id: 'orange_money', labelKey: 'transactions.deposit_channel_orange' },
 ];
 
 const CHANNEL_LABEL_KEY: Record<Channel, string> = {
@@ -114,7 +118,9 @@ export default function WithdrawScreen({ navigation }: WithdrawScreenProps) {
               accessibilityRole="radio"
               accessibilityState={{ selected: selectedChannel === ch.id }}
             >
-              <Text style={styles.channelIcon}>{ch.icon}</Text>
+              <View style={{ marginRight: spacing.md }}>
+                <ChannelLogo channel={ch.id as PaymentChannel} size={40} />
+              </View>
               <View style={styles.channelInfo}>
                 <Text style={styles.channelLabel}>{i18n.t(ch.labelKey)}</Text>
               </View>
@@ -164,8 +170,9 @@ export default function WithdrawScreen({ navigation }: WithdrawScreenProps) {
   if (step === 2) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-          {renderHeader(2)}
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            {renderHeader(2)}
           <Text style={styles.sectionTitle}>
             {i18n.t('transactions.withdraw_amount_title')}
           </Text>
@@ -252,12 +259,13 @@ export default function WithdrawScreen({ navigation }: WithdrawScreenProps) {
           )}
 
           <TerahButton
-            label={i18n.t('common.continue')}
-            onPress={handleAmountNext}
-            disabled={!selectedAccountId || !amountXAF}
-            style={styles.cta}
-          />
-        </ScrollView>
+              label={i18n.t('common.continue')}
+              onPress={handleAmountNext}
+              disabled={!selectedAccountId || !amountXAF}
+              style={styles.cta}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -407,7 +415,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   channelCardSelected: { borderColor: colors.teal },
-  channelIcon: { fontSize: 28, marginRight: spacing.md },
+  channelIcon: { marginRight: spacing.md },
   channelInfo: { flex: 1 },
   channelLabel: {
     fontFamily: 'Poppins_600SemiBold',

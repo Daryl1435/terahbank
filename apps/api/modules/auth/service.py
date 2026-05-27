@@ -40,6 +40,7 @@ from .schemas import (
     RegisterRequest,
     RegisterResponseData,
     ResendOTPRequest,
+    UserProfileResponseData,
     VerifyOTPRequest,
 )
 
@@ -108,18 +109,23 @@ class AuthService:
 
         from modules.notifications.service import dispatch_otp_sms
         from core.sms import SMSBudgetExhaustedError
+        sms_failed = False
         try:
             await dispatch_otp_sms(user.phone_number, otp)
         except SMSBudgetExhaustedError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={"code": "SMS_UNAVAILABLE", "message": "SMS service temporarily unavailable. Please try again later."},
-            )
+            sms_failed = True
 
         return TerahResponse(
             success=True,
-            data=RegisterResponseData(user_id=str(user.id)).model_dump(),
-            message="Registration successful. Please verify your phone number.",
+            data=RegisterResponseData(
+                user_id=str(user.id),
+                otp_dev=otp if settings.APP_ENV == "development" else None,
+            ).model_dump(),
+            message=(
+                "Registration successful. OTP in otp_dev field (dev mode — SMS limit reached)."
+                if sms_failed and settings.APP_ENV == "development"
+                else "Registration successful. Please verify your phone number."
+            ),
         )
 
     # ── Verify OTP (FR-002 / FR-005) ─────────────────────────────────────────
@@ -314,18 +320,23 @@ class AuthService:
 
         from modules.notifications.service import dispatch_otp_sms
         from core.sms import SMSBudgetExhaustedError
+        sms_failed = False
         try:
             await dispatch_otp_sms(user.phone_number, otp)
         except SMSBudgetExhaustedError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={"code": "SMS_UNAVAILABLE", "message": "SMS service temporarily unavailable. Please try again later."},
-            )
+            sms_failed = True
 
         return TerahResponse(
             success=True,
-            data=LoginInitResponseData(user_id=str(user.id)).model_dump(),
-            message="OTP sent to your registered phone number.",
+            data=LoginInitResponseData(
+                user_id=str(user.id),
+                otp_dev=otp if settings.APP_ENV == "development" else None,
+            ).model_dump(),
+            message=(
+                "OTP in otp_dev field (dev mode — SMS limit reached)."
+                if sms_failed and settings.APP_ENV == "development"
+                else "OTP sent to your registered phone number."
+            ),
         )
 
     # ── Refresh Token (FR-008) ────────────────────────────────────────────────
@@ -438,15 +449,21 @@ class AuthService:
 
         from modules.notifications.service import dispatch_otp_sms
         from core.sms import SMSBudgetExhaustedError
+        sms_failed = False
         try:
             await dispatch_otp_sms(user.phone_number, otp)
         except SMSBudgetExhaustedError:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail={"code": "SMS_UNAVAILABLE", "message": "SMS service temporarily unavailable. Please try again later."},
-            )
+            sms_failed = True
 
-        return TerahResponse(success=True, message="OTP resent successfully.")
+        return TerahResponse(
+            success=True,
+            data={"otp_dev": otp} if settings.APP_ENV == "development" else None,
+            message=(
+                "OTP in data.otp_dev (dev mode — SMS limit reached)."
+                if sms_failed and settings.APP_ENV == "development"
+                else "OTP resent successfully."
+            ),
+        )
 
     # ── Change Password ───────────────────────────────────────────────────────
 
@@ -532,4 +549,19 @@ class AuthService:
             success=True,
             data=PINTokenResponseData(pin_token=token).model_dump(),
             message="PIN verified.",
+        )
+
+    # ── Get current user profile ──────────────────────────────────────────────
+
+    async def get_me(self, user) -> TerahResponse:
+        return TerahResponse(
+            success=True,
+            data=UserProfileResponseData(
+                user_id=str(user.id),
+                full_name=user.full_name,
+                phone_number=user.phone_number,
+                email=user.email,
+                kyc_status=user.kyc_status.value if hasattr(user.kyc_status, "value") else str(user.kyc_status),
+                preferred_language=user.preferred_language or "fr",
+            ).model_dump(),
         )

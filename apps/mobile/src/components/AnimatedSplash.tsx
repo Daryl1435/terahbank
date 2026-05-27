@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { colors } from '@/utils/tokens';
 
@@ -21,6 +21,11 @@ export default function AnimatedSplash({ onFinish }: Props) {
   const containerOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      onFinish();
+      return;
+    }
+
     const exitAnim = Animated.sequence([
       Animated.delay(HOLD_MS),
       Animated.timing(containerOpacity, {

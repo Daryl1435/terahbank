@@ -16,6 +16,7 @@ import type { RootStackParamList } from '../../App';
 import { useAuthStore } from '@/stores/authStore';
 import { useAppStore } from '@/stores/appStore';
 import type { FontSize } from '@/stores/appStore';
+import { useProfile } from '@/hooks/useAuth';
 import { TerahButton } from '@/components/TerahButton';
 import { TerahIcon } from '@/components/TerahIcon';
 import type { TerahIconName } from '@/components/TerahIcon';
@@ -64,11 +65,16 @@ const ProfileRow: React.FC<ProfileRowProps> = ({ icon, label, value, onPress, ch
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const kycStatus   = useAuthStore((s) => s.kycStatus);
+  const fullName    = useAuthStore((s) => s.fullName);
   const clearAuth   = useAuthStore((s) => s.clearAuth);
   const language    = useAppStore((s) => s.language);
   const setLanguage = useAppStore((s) => s.setLanguage);
   const fontSize    = useAppStore((s) => s.fontSize);
   const setFontSize = useAppStore((s) => s.setFontSize);
+
+  const { data: profile } = useProfile();
+
+  const avatarLetter = (fullName ?? profile?.full_name ?? 'U').charAt(0).toUpperCase();
 
   const kycLabel =
     kycStatus === 'approved' ? i18n.t('profile.kyc_approved')
@@ -90,8 +96,8 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           text: i18n.t('profile.logout'),
           style: 'destructive',
           onPress: () => {
+            // clearAuth triggers AppNavigator to show pre-auth stack automatically
             clearAuth();
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
           },
         },
       ],
@@ -126,7 +132,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         {/* ── Avatar ─────────────────────────────────────────────────────── */}
         <View style={styles.avatarSection}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarLetter}>U</Text>
+            <Text style={styles.avatarLetter}>{avatarLetter}</Text>
           </View>
           <Text style={styles.screenTitle}>{i18n.t('profile.title')}</Text>
         </View>
@@ -155,23 +161,17 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             <ProfileRow
               icon="person-outline"
               label={i18n.t('profile.full_name')}
-              value="—"
-              onPress={() => Alert.alert('Bientôt disponible', 'Jalon 5.')}
-              chevron
+              value={fullName ?? profile?.full_name ?? '—'}
             />
             <ProfileRow
               icon="call-outline"
               label={i18n.t('auth.phone_label')}
-              value="—"
-              onPress={() => Alert.alert('Bientôt disponible', 'Jalon 5.')}
-              chevron
+              value={profile?.phone_number ?? '—'}
             />
             <ProfileRow
               icon="mail-outline"
               label={i18n.t('auth.email_label')}
-              value="—"
-              onPress={() => Alert.alert('Bientôt disponible', 'Jalon 5.')}
-              chevron
+              value={profile?.email ?? '—'}
               last
             />
           </View>
@@ -256,13 +256,13 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             <ProfileRow
               icon="key-outline"
               label={i18n.t('profile.change_password')}
-              onPress={() => Alert.alert('Bientôt disponible', 'Jalon 5.')}
+              onPress={() => navigation.navigate('ChangePassword')}
               chevron
             />
             <ProfileRow
               icon="finger-print-outline"
               label={i18n.t('profile.biometric_settings')}
-              onPress={() => Alert.alert('Bientôt disponible', 'Jalon 5.')}
+              onPress={() => navigation.navigate('BiometricSettings')}
               chevron
               last
             />
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   avatarLetter: {
     fontFamily: 'Poppins_700Bold',
     fontSize: 32,
-    color: '#FFFFFF',
+    color: colors.white,
   },
   screenTitle: {
     fontFamily: 'Poppins_700Bold',
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 14,
     overflow: 'hidden',
     shadowColor: '#000',

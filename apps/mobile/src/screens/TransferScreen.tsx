@@ -18,6 +18,8 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -168,31 +170,33 @@ export default function TransferScreen({ navigation }: TransferScreenProps) {
   if (step === 1) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-          {renderHeader(1)}
-          <Text style={styles.sectionTitle}>
-            {i18n.t('transactions.transfer_recipient_title')}
-          </Text>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            {renderHeader(1)}
+            <Text style={styles.sectionTitle}>
+              {i18n.t('transactions.transfer_recipient_title')}
+            </Text>
 
-          <TerahInput
-            label={i18n.t('transactions.transfer_recipient_label')}
-            value={recipient}
-            onChangeText={(t) => { setRecipient(t); setRecipientError(null); }}
-            placeholder={i18n.t('transactions.transfer_recipient_placeholder')}
-            hint={i18n.t('transactions.transfer_recipient_hint')}
-            error={recipientError}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="default"
-          />
+            <TerahInput
+              label={i18n.t('transactions.transfer_recipient_label')}
+              value={recipient}
+              onChangeText={(t) => { setRecipient(t); setRecipientError(null); }}
+              placeholder={i18n.t('transactions.transfer_recipient_placeholder')}
+              hint={i18n.t('transactions.transfer_recipient_hint')}
+              error={recipientError}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="default"
+            />
 
-          <TerahButton
-            label={i18n.t('common.continue')}
-            onPress={handleRecipientNext}
-            disabled={!recipient.trim()}
-            style={styles.cta}
-          />
-        </ScrollView>
+            <TerahButton
+              label={i18n.t('common.continue')}
+              onPress={handleRecipientNext}
+              disabled={!recipient.trim()}
+              style={styles.cta}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -201,7 +205,8 @@ export default function TransferScreen({ navigation }: TransferScreenProps) {
   if (step === 2) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           {renderHeader(2)}
           <Text style={styles.sectionTitle}>
             {i18n.t('transactions.transfer_amount_title')}
@@ -271,6 +276,7 @@ export default function TransferScreen({ navigation }: TransferScreenProps) {
             style={styles.cta}
           />
         </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }

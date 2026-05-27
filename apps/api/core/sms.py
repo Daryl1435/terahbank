@@ -113,6 +113,9 @@ async def send_sms(phone_e164: str, message: str, msg_type: str = "ALERT") -> No
         logger.warning("Twilio credentials not set — SMS skipped (type=%s)", msg_type)
         return
 
+    if settings.APP_ENV == "development":
+        logger.info("DEV SMS to %s: %s", phone_e164, message)
+
     # ── Budget gate ────────────────────────────────────────────────────────────
     used, limit = await get_sms_usage()
     if limit > 0 and used >= limit:
@@ -154,6 +157,20 @@ async def send_sms(phone_e164: str, message: str, msg_type: str = "ALERT") -> No
         )
 
     except SMSBudgetExhaustedError:
+        raise
+    except httpx.HTTPStatusError as exc:
+        # Twilio 429 / trial daily limit (error code 63038) → treat as budget exhausted
+        if exc.response.status_code == 429:
+            try:
+                twilio_code = exc.response.json().get("code", 0)
+            except Exception:
+                twilio_code = 0
+            logger.warning(
+                "Twilio rate limit hit for %s (code=%s) — raising SMSBudgetExhaustedError",
+                phone_e164[:7] + "****", twilio_code,
+            )
+            raise SMSBudgetExhaustedError(f"Twilio rate limit (code {twilio_code})") from exc
+        logger.error("SMS delivery failed to %s: %s", phone_e164[:7] + "****", exc)
         raise
     except Exception as exc:
         logger.error("SMS delivery failed to %s: %s", phone_e164[:7] + "****", exc)

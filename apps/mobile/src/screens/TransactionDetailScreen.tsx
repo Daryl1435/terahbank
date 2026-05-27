@@ -98,8 +98,8 @@ export default function TransactionDetailScreen({
   const isTerminal = TERMINAL_STATUSES.includes(currentStatus);
   const shouldPoll = !isTerminal && !pollingExpired && !!transactionId;
 
-  // FR-041: Real-time status poll every 3s
-  useTransactionStatus(transactionId, shouldPoll);
+  // FR-041: Real-time status poll every 3s — drives polledStatus directly
+  const { data: polledData } = useTransactionStatus(transactionId, shouldPoll);
 
   // Stop polling after POLL_TIMEOUT_MS regardless of status
   useEffect(() => {
@@ -110,12 +110,13 @@ export default function TransactionDetailScreen({
     };
   }, [shouldPoll]);
 
-  // Sync polled status from transaction query updates
+  // Sync polled status: prefer poll result over initial txn snapshot
   useEffect(() => {
-    if (txn?.status && txn.status !== polledStatus) {
-      setPolledStatus(txn.status as TransactionStatus);
+    const latest = (polledData?.status ?? txn?.status) as TransactionStatus | undefined;
+    if (latest && latest !== polledStatus) {
+      setPolledStatus(latest);
     }
-  }, [txn?.status]);
+  }, [polledData?.status, txn?.status]);
 
   if (isLoading) {
     return (
@@ -273,8 +274,8 @@ const styles = StyleSheet.create({
     height: 56,
   },
   backButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  backText: { fontFamily: 'Poppins_600SemiBold', fontSize: 20, color: '#FFFFFF' },
-  appBarTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 18, color: '#FFFFFF' },
+  backText: { fontFamily: 'Poppins_600SemiBold', fontSize: 20, color: colors.white },
+  appBarTitle: { fontFamily: 'Poppins_600SemiBold', fontSize: 18, color: colors.white },
   screen: { flex: 1, backgroundColor: colors.offWhite },
   container: { paddingHorizontal: spacing.md, paddingBottom: 40, paddingTop: spacing.lg },
   heroCard: {

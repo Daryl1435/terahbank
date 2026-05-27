@@ -131,33 +131,36 @@ export default function CardPaymentWebViewScreen({ navigation, route }: CardPaym
         </TouchableOpacity>
       </View>
 
-      {/* Loading indicator overlaid on WebView */}
-      {loading && !error && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={colors.teal} />
-          <Text style={styles.loadingText}>{i18n.t('card_payment.loading')}</Text>
-        </View>
-      )}
-
-      {error ? (
-        <View style={styles.center}>
-          <Text style={styles.errorText}>{i18n.t('card_payment.load_error')}</Text>
-          <TouchableOpacity onPress={() => { setError(false); setLoading(true); }} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>{i18n.t('common.retry')}</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <WebView
-          source={{ uri: paymentUrl }}
-          onLoadEnd={() => setLoading(false)}
-          onError={() => { setLoading(false); setError(true); }}
-          onNavigationStateChange={handleNavigationStateChange}
-          javaScriptEnabled
-          domStorageEnabled
-          thirdPartyCookiesEnabled={false}   // PCI-DSS: restrict cross-site cookies
-          style={styles.webview}
-        />
-      )}
+      {/* Content area — flex so overlay sits naturally below the header */}
+      <View style={{ flex: 1 }}>
+        {error ? (
+          <View style={styles.center}>
+            <Text style={styles.errorText}>{i18n.t('card_payment.load_error')}</Text>
+            <TouchableOpacity onPress={() => { setError(false); setLoading(true); }} style={styles.backBtn}>
+              <Text style={styles.backBtnText}>{i18n.t('common.retry')}</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            <WebView
+              source={{ uri: paymentUrl }}
+              onLoadEnd={() => setLoading(false)}
+              onError={() => { setLoading(false); setError(true); }}
+              onNavigationStateChange={handleNavigationStateChange}
+              javaScriptEnabled
+              domStorageEnabled
+              thirdPartyCookiesEnabled={false}   // PCI-DSS: restrict cross-site cookies
+              style={styles.webview}
+            />
+            {loading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={colors.teal} />
+                <Text style={styles.loadingText}>{i18n.t('card_payment.loading')}</Text>
+              </View>
+            )}
+          </>
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -199,11 +202,7 @@ const styles = StyleSheet.create({
     color:      colors.error,
   },
   loadingOverlay: {
-    position:       'absolute',
-    top:            56,
-    left:           0,
-    right:          0,
-    bottom:         0,
+    ...StyleSheet.absoluteFillObject,
     alignItems:     'center',
     justifyContent: 'center',
     backgroundColor: colors.offWhite,
@@ -235,6 +234,6 @@ const styles = StyleSheet.create({
   backBtnText: {
     fontFamily: 'Poppins_600SemiBold',
     fontSize:   15,
-    color:      '#FFFFFF',
+    color:      colors.white,
   },
 });

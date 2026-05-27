@@ -23,6 +23,7 @@ import { useOpenProjectAccount } from '@/hooks/useBalance';
 import { TerahButton } from '@/components/TerahButton';
 import { TerahInput } from '@/components/TerahInput';
 import { ProgressBar } from '@/components/ProgressBar';
+import { TerahIcon } from '@/components/TerahIcon';
 import { colors } from '@/utils/tokens';
 import { formatXAF } from '@/utils/formatXAF';
 import i18n from '@/locales';
@@ -36,15 +37,14 @@ interface OpenProjectAccountScreenProps {
 /** Validate YYYY-MM-DD format and at least 6 months from today. */
 function validateTargetDate(value: string): string | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return 'Format attendu : AAAA-MM-JJ';
+    return i18n.t('accounts.date_format_error');
   }
   const target = new Date(value);
   if (isNaN(target.getTime())) {
-    return 'Date invalide.';
+    return i18n.t('accounts.date_invalid_error');
   }
   const today = new Date();
   const minDate = new Date(today);
-  // Add 6 months using month arithmetic
   minDate.setMonth(minDate.getMonth() + 6);
   if (target < minDate) {
     return i18n.t('accounts.target_date_hint');
@@ -60,17 +60,19 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
 
   const mutation = useOpenProjectAccount();
 
-  const parsedAmount = parseInt(targetAmountInput.replace(/\D/g, ''), 10);
-  const hasAmount = !isNaN(parsedAmount) && parsedAmount > 0;
+  // User enters XAF — multiply ×100 to get units before sending to API
+  const parsedAmountXAF = parseInt(targetAmountInput.replace(/\D/g, ''), 10);
+  const parsedAmount = !isNaN(parsedAmountXAF) ? parsedAmountXAF * 100 : NaN;
+  const hasAmount = !isNaN(parsedAmountXAF) && parsedAmountXAF > 0;
 
   const validate = (): boolean => {
     const newErrors: Record<string, string | null> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Le nom du projet est requis.';
+      newErrors.name = i18n.t('accounts.project_name_required');
     }
     if (!hasAmount) {
-      newErrors.amount = 'Entrez un montant cible valide.';
+      newErrors.amount = i18n.t('accounts.target_amount_required');
     }
     const dateError = validateTargetDate(targetDate);
     if (dateError) {
@@ -132,7 +134,9 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
           <Text style={styles.backText}>← {i18n.t('common.back')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.icon}>🎯</Text>
+        <View style={styles.iconContainer}>
+          <TerahIcon name="flag-outline" size={36} color="#7C3AED" />
+        </View>
         <Text style={styles.title}>{i18n.t('accounts.project')}</Text>
         <Text style={styles.subtitle}>{i18n.t('accounts.project_desc')}</Text>
 
@@ -151,7 +155,7 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
         <TerahInput
           label={i18n.t('accounts.target_amount_label')}
           value={targetAmountInput}
-          onChangeText={(v) => { setTargetAmountInput(v); setErrors((e) => ({ ...e, amount: null })); }}
+          onChangeText={(v) => { setTargetAmountInput(v.replace(/\D/g, '')); setErrors((e) => ({ ...e, amount: null })); }}
           placeholder={i18n.t('accounts.target_amount_placeholder')}
           hint={i18n.t('accounts.target_amount_hint')}
           keyboardType="numeric"
@@ -173,8 +177,8 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
         {name.trim() && hasAmount ? (
           <View style={styles.preview}>
             <Text style={styles.previewProjectName}>{name.trim()}</Text>
-            <Text style={styles.previewTarget}>{formatXAF(parsedAmount)}</Text>
-            <ProgressBar percent={0} label="Progression initiale" showPercent />
+            <Text style={styles.previewTarget}>{formatXAF(parsedAmountXAF * 100)}</Text>
+            <ProgressBar percent={0} label={i18n.t('accounts.initial_progress')} showPercent />
           </View>
         ) : null}
 
@@ -185,12 +189,8 @@ export default function OpenProjectAccountScreen({ navigation }: OpenProjectAcco
 
         {/* Rules */}
         <View style={styles.rulesBox}>
-          <Text style={styles.rulesTitle}>À savoir</Text>
-          <Text style={styles.rulesText}>
-            • Durée minimale de 6 mois{'\n'}
-            • Plusieurs Comptes Projet autorisés{'\n'}
-            • Retrait anticipé soumis à pénalité
-          </Text>
+          <Text style={styles.rulesTitle}>{i18n.t('accounts.rules_title')}</Text>
+          <Text style={styles.rulesText}>{i18n.t('accounts.project_rules')}</Text>
         </View>
 
         <TerahButton
@@ -225,9 +225,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.teal,
   },
-  icon: {
-    fontSize: 48,
-    marginBottom: 12,
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#7C3AED15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   title: {
     fontFamily: 'Poppins_700Bold',

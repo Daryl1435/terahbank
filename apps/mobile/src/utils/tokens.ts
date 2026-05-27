@@ -13,6 +13,9 @@ export const colors = {
   warning:   '#FFB020',   // Pending, low balance
   error:     '#E53E3E',   // Failed, invalid input
   info:      '#00B4D8',   // Informational banners
+  successBg: '#E6F9F2',   // Light green tint — active status chips, success banners
+  errorBg:   '#FFEAEA',   // Light red tint  — failed/expired status chips
+  warningBg: '#FFF8E1',   // Light yellow    — pending status chips
 } as const;
 
 export const spacing = {

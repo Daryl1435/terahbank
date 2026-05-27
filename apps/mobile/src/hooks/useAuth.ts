@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useAuthStore, saveTokens } from '@/stores/authStore';
 import { authService } from '@/services/auth';
 import type {
@@ -64,4 +64,16 @@ export const useChangePassword = () =>
   useMutation({
     mutationFn: (payload: { current_password: string; new_password: string }) =>
       authService.changePassword(payload),
+  });
+
+/**
+ * useProfile — fetches the authenticated user's full profile (name, phone, email).
+ * Cached for 5 minutes; returns null while loading or on error.
+ */
+export const useProfile = () =>
+  useQuery({
+    queryKey: ['auth', 'me'],
+    queryFn: () => authService.getMe(),
+    staleTime: 5 * 60_000,
+    retry: 1,
   });

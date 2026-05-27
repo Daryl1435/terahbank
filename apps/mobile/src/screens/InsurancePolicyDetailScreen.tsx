@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold',
   },
   appBarTitle: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 18,
     fontFamily: 'Poppins_600SemiBold',
   },
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   heroCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -308,10 +308,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   statusActive: {
-    backgroundColor: '#E6FFF5',
+    backgroundColor: colors.successBg,
   },
   statusCancelled: {
-    backgroundColor: '#FFEAEA',
+    backgroundColor: colors.errorBg,
   },
   statusText: {
     fontFamily: 'Roboto_500Medium',
@@ -324,12 +324,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   expiryBannerWarning: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: colors.warningBg,
     borderLeftWidth: 4,
     borderLeftColor: colors.warning,
   },
   expiryBannerUrgent: {
-    backgroundColor: '#FFEAEA',
+    backgroundColor: colors.errorBg,
     borderLeftWidth: 4,
     borderLeftColor: colors.error,
   },
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     color: colors.darkGrey,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.white,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingTop: 16,

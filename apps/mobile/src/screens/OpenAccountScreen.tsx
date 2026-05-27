@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../App';
+import { TerahIcon } from '@/components/TerahIcon';
+import type { TerahIconName } from '@/components/TerahIcon';
 import { colors } from '@/utils/tokens';
 import i18n from '@/locales';
 
@@ -26,7 +28,7 @@ interface OpenAccountScreenProps {
 interface AccountTypeCard {
   typeKey: string;
   descKey: string;
-  icon: string;
+  icon: TerahIconName;
   screen: keyof RootStackParamList;
   color: string;
 }
@@ -35,21 +37,21 @@ const ACCOUNT_TYPES: AccountTypeCard[] = [
   {
     typeKey: 'accounts.standard',
     descKey: 'accounts.standard_desc',
-    icon: '💰',
+    icon: 'wallet-outline',
     screen: 'OpenStandardAccount',
     color: colors.teal,
   },
   {
     typeKey: 'accounts.project',
     descKey: 'accounts.project_desc',
-    icon: '🎯',
+    icon: 'flag-outline',
     screen: 'OpenProjectAccount',
-    color: '#7C3AED',  // purple accent for project
+    color: '#7C3AED',
   },
   {
     typeKey: 'accounts.term_deposit',
     descKey: 'accounts.term_deposit_desc',
-    icon: '📈',
+    icon: 'timer-outline',
     screen: 'OpenTermDeposit',
     color: colors.navy,
   },
@@ -84,7 +86,7 @@ export default function OpenAccountScreen({ navigation }: OpenAccountScreenProps
             style={styles.card}
           >
             <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
-              <Text style={styles.icon}>{item.icon}</Text>
+              <TerahIcon name={item.icon} size={26} color={item.color} />
             </View>
             <View style={styles.cardText}>
               <Text style={[styles.cardTitle, { color: item.color }]}>
@@ -151,9 +153,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  icon: {
-    fontSize: 26,
   },
   cardText: {
     flex: 1,

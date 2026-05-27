@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { RefreshCw } from 'lucide-react';
 import { listTransactions } from '@/lib/api';
 import { formatXAF, formatDateTime } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import Badge, { statusVariant } from '@/components/Badge';
 import Pagination from '@/components/Pagination';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -15,6 +17,7 @@ const CHANNELS          = ['', 'internal', 'mtn_momo', 'orange_money', 'visa', '
 const STATUSES          = ['', 'pending', 'processing', 'success', 'failed'];
 
 export default function TransactionsPage() {
+  const { t } = useTranslation();
   const [userId,          setUserId]          = useState('');
   const [transactionType, setTransactionType] = useState('');
   const [channel,         setChannel]         = useState('');
@@ -52,20 +55,21 @@ export default function TransactionsPage() {
     setOffset(0);
   }
 
+  const countText = t('transactions.countAuto').replace('{count}', String(total));
+
   return (
     <div className="p-8">
       <div className="flex items-start justify-between mb-6 flex-wrap gap-4">
         <div>
-          <h1 className="font-poppins font-semibold text-2xl text-navy">Transactions</h1>
-          <p className="text-mid-grey text-sm mt-1">
-            {total} result{total !== 1 ? 's' : ''} · auto-refresh every 15s
-          </p>
+          <h1 className="font-poppins font-semibold text-2xl text-navy">{t('transactions.title')}</h1>
+          <p className="text-mid-grey text-sm mt-1">{countText}</p>
         </div>
         <button
           onClick={() => refetch()}
-          className="px-3 py-2 border border-light-grey rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
+          className="flex items-center gap-2 px-3 py-2 border border-light-grey rounded-lg text-sm text-dark-grey hover:bg-light-grey transition-colors"
         >
-          ↻ Refresh
+          <RefreshCw className="w-4 h-4" />
+          {t('transactions.refresh')}
         </button>
       </div>
 
@@ -73,7 +77,7 @@ export default function TransactionsPage() {
       <div className="bg-white rounded-xl shadow-card p-4 mb-6 flex flex-wrap gap-3">
         <input
           type="text"
-          placeholder="User ID (UUID)"
+          placeholder={t('transactions.filters.userId')}
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           className="flex-1 min-w-[200px] px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal font-mono"
@@ -83,15 +87,15 @@ export default function TransactionsPage() {
           onChange={(e) => { setTransactionType(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">All types</option>
-          {TRANSACTION_TYPES.slice(1).map((t) => <option key={t} value={t}>{t}</option>)}
+          <option value="">{t('transactions.filters.allTypes')}</option>
+          {TRANSACTION_TYPES.slice(1).map((ty) => <option key={ty} value={ty}>{ty}</option>)}
         </select>
         <select
           value={channel}
           onChange={(e) => { setChannel(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">All channels</option>
+          <option value="">{t('transactions.filters.allChannels')}</option>
           {CHANNELS.slice(1).map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
         <select
@@ -99,7 +103,7 @@ export default function TransactionsPage() {
           onChange={(e) => { setTxnStatus(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">All statuses</option>
+          <option value="">{t('transactions.filters.allStatuses')}</option>
           {STATUSES.slice(1).map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <input
@@ -107,20 +111,20 @@ export default function TransactionsPage() {
           value={dateFrom}
           onChange={(e) => { setDateFrom(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
-          title="Start date"
+          title={t('transactions.filters.dateStart')}
         />
         <input
           type="date"
           value={dateTo}
           onChange={(e) => { setDateTo(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
-          title="End date"
+          title={t('transactions.filters.dateEnd')}
         />
         <button
           onClick={applyFilters}
           className="px-4 py-2 bg-teal text-white rounded-lg text-sm font-medium hover:bg-teal-dark transition-colors"
         >
-          Apply
+          {t('transactions.filters.apply')}
         </button>
       </div>
 
@@ -129,21 +133,21 @@ export default function TransactionsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><LoadingSpinner className="w-8 h-8" /></div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Failed to load transactions.</p>
+          <p className="text-error text-sm text-center py-16">{t('transactions.loadError')}</p>
         ) : txns.length === 0 ? (
-          <p className="text-mid-grey text-sm text-center py-16">No transactions found.</p>
+          <p className="text-mid-grey text-sm text-center py-16">{t('transactions.noResults')}</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm admin-table">
                 <thead>
                   <tr>
-                    <th className="text-left px-4 py-3">Reference</th>
-                    <th className="text-left px-4 py-3">Type</th>
-                    <th className="text-left px-4 py-3">Channel</th>
-                    <th className="text-right px-4 py-3">Amount</th>
-                    <th className="text-left px-4 py-3">Status</th>
-                    <th className="text-left px-4 py-3">Date</th>
+                    <th className="text-left px-4 py-3">{t('transactions.table.reference')}</th>
+                    <th className="text-left px-4 py-3">{t('transactions.table.type')}</th>
+                    <th className="text-left px-4 py-3">{t('transactions.table.channel')}</th>
+                    <th className="text-right px-4 py-3">{t('transactions.table.amount')}</th>
+                    <th className="text-left px-4 py-3">{t('transactions.table.status')}</th>
+                    <th className="text-left px-4 py-3">{t('transactions.table.date')}</th>
                   </tr>
                 </thead>
                 <tbody>

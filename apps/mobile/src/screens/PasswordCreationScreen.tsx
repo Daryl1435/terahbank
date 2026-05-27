@@ -52,7 +52,11 @@ export function PasswordCreationScreen({ navigation, route }: PasswordCreationSc
       { full_name, phone_number, email, password, city, address },
       {
         onSuccess: (data) => {
-          navigation.navigate('OTP', { userId: data.user_id, purpose: 'verify' });
+          navigation.navigate('OTP', {
+            userId: data.user_id,
+            purpose: 'verify',
+            otpDev: data.otp_dev,
+          });
         },
         onError: (err: any) => {
           setApiError(err.message ?? i18n.t('errors.generic'));

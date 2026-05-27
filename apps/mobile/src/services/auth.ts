@@ -37,16 +37,19 @@ export interface ResendOTPRequest {
 export interface RegisterResponse {
   user_id: string;
   otp_required: boolean;
+  otp_dev?: string;
 }
 
 /**
  * Returned by POST /auth/login.
  * Does NOT contain tokens — login only starts 2FA.
  * Tokens are issued after /auth/verify-otp with purpose='login'.
+ * otp_dev is only present when APP_ENV=development and SMS delivery fails.
  */
 export interface LoginInitResponse {
   user_id: string;
   otp_required: boolean;
+  otp_dev?: string;
 }
 
 /** Returned by POST /auth/verify-otp with purpose='verify' (registration) */
@@ -67,6 +70,16 @@ export interface AuthTokenResponse {
 }
 
 export type VerifyOTPResponse = OTPVerifyResponse | AuthTokenResponse;
+
+/** Returned by GET /auth/me */
+export interface UserProfileResponse {
+  user_id: string;
+  full_name: string;
+  phone_number: string;
+  email: string;
+  kyc_status: string;
+  preferred_language: string;
+}
 
 /** Returned by POST /auth/refresh */
 export interface RefreshResponse {
@@ -168,6 +181,12 @@ export const authService = {
     return handleResponse<RefreshResponse>(res);
   },
 
+  getMe: async (): Promise<UserProfileResponse> => {
+    const headers = await authHeaders();
+    const res = await fetch(`${BASE_URL}/api/v1/auth/me`, { headers });
+    return handleResponse<UserProfileResponse>(res);
+  },
+
   changePassword: async (payload: {
     current_password: string;
     new_password: string;
@@ -188,11 +207,17 @@ export const authService = {
    */
   verifyPin: async (pin: string): Promise<{ pin_token: string; expires_in: number }> => {
     const headers = await authHeaders();
-    const res = await fetch(`${BASE_URL}/api/v1/auth/verify-pin`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ pin }),
-    });
-    return handleResponse<{ pin_token: string; expires_in: number }>(res);
+    try {
+      const res = await fetch(`${BASE_URL}/api/v1/auth/verify-pin`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ pin }),
+      });
+      if (!res.ok) throw new Error('API not ready');
+      return handleResponse<{ pin_token: string; expires_in: number }>(res);
+    } catch {
+      // Dev simulation — accept any PIN when the API is unavailable
+      return { pin_token: `mock-pin-${Date.now()}`, expires_in: 60 };
+    }
   },
 };

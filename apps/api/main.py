@@ -163,8 +163,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "camera=(), microphone=(), geolocation=(), payment=()"
         )
 
-        # CSP: this is a JSON API — there are no scripts, styles, or frames to allow
-        response.headers["Content-Security-Policy"] = "default-src 'none'"
+        # CSP: relax for Swagger UI in dev; lock down in production
+        if settings.DEBUG:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'none'; "
+                "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; "
+                "img-src 'self' data:; "
+                "font-src 'self' cdn.jsdelivr.net; "
+                "connect-src 'self'"
+            )
+        else:
+            response.headers["Content-Security-Policy"] = "default-src 'none'"
 
         return response
 

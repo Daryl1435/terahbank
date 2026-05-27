@@ -26,6 +26,7 @@ import { useOpenTermDeposit } from '@/hooks/useBalance';
 import { accountsService, TermDepositCalculatorResponse } from '@/services/accounts';
 import { TerahButton } from '@/components/TerahButton';
 import { TerahInput } from '@/components/TerahInput';
+import { TerahIcon } from '@/components/TerahIcon';
 import { colors } from '@/utils/tokens';
 import { formatXAF } from '@/utils/formatXAF';
 import i18n from '@/locales';
@@ -36,7 +37,7 @@ interface OpenTermDepositScreenProps {
   navigation: OpenTermDepositNavProp;
 }
 
-const MIN_AMOUNT = 20_000_000; // 200,000 XAF
+const MIN_AMOUNT_XAF = 200_000; // minimum in XAF
 
 export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScreenProps) {
   const [amountInput, setAmountInput] = useState('');
@@ -50,10 +51,12 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
 
   const mutation = useOpenTermDeposit();
 
-  const parsedAmount = parseInt(amountInput.replace(/\D/g, ''), 10);
+  // User enters XAF — multiply ×100 to get units for API/calculator
+  const parsedAmountXAF = parseInt(amountInput.replace(/\D/g, ''), 10);
+  const parsedAmount = !isNaN(parsedAmountXAF) ? parsedAmountXAF * 100 : NaN;
   const parsedDuration = parseInt(durationInput, 10);
 
-  const isValidAmount = !isNaN(parsedAmount) && parsedAmount >= MIN_AMOUNT;
+  const isValidAmount = !isNaN(parsedAmountXAF) && parsedAmountXAF >= MIN_AMOUNT_XAF;
   const isValidDuration = !isNaN(parsedDuration) && parsedDuration >= 1;
   const canCalculate = isValidAmount && isValidDuration;
 
@@ -61,7 +64,7 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
   const handleCalculate = async () => {
     if (!canCalculate) {
       const errs: Record<string, string | null> = {};
-      if (!isValidAmount) errs.amount = i18n.t('accounts.amount_hint');
+      if (!isValidAmount) errs.amount = i18n.t('accounts.amount_hint'); // shows "Minimum 200,000 XAF"
       if (!isValidDuration) errs.duration = i18n.t('accounts.duration_months_hint');
       setFieldErrors(errs);
       return;
@@ -71,7 +74,7 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
     setCalculator(null);
     setIsCalculating(true);
     try {
-      const result = await accountsService.termDepositCalculator(parsedAmount, parsedDuration);
+      const result = await accountsService.termDepositCalculator(parsedAmount, parsedDuration); // parsedAmount already in units
       setCalculator(result);
     } catch (err: any) {
       setCalcError(err?.message ?? i18n.t('errors.generic'));
@@ -90,7 +93,7 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
         onSuccess: (data) => {
           Alert.alert(
             i18n.t('accounts.open_success'),
-            `${formatXAF(data.principal)} · ${data.duration_months} mois`,
+            `${formatXAF(data.principal)} · ${i18n.t('accounts.n_months', { n: data.duration_months })}`,
             [{ text: i18n.t('common.confirm'), onPress: () => navigation.navigate('Dashboard') }],
           );
         },
@@ -123,7 +126,9 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
           <Text style={styles.backText}>← {i18n.t('common.back')}</Text>
         </TouchableOpacity>
 
-        <Text style={styles.icon}>📈</Text>
+        <View style={styles.iconContainer}>
+          <TerahIcon name="timer-outline" size={36} color={colors.navy} />
+        </View>
         <Text style={styles.title}>{i18n.t('accounts.term_deposit')}</Text>
         <Text style={styles.subtitle}>{i18n.t('accounts.term_deposit_desc')}</Text>
 
@@ -209,7 +214,7 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
             <View style={styles.calcDivider} />
 
             {/* FR-026: Early break warning */}
-            <Text style={styles.earlyBreakTitle}>En cas de sortie anticipée</Text>
+            <Text style={styles.earlyBreakTitle}>{i18n.t('accounts.early_break_section')}</Text>
             <View style={styles.calcRow}>
               <Text style={styles.calcKey}>{i18n.t('accounts.early_break_penalty')}</Text>
               <Text style={[styles.calcValue, styles.penaltyValue]}>
@@ -225,12 +230,8 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
 
         {/* Rules box */}
         <View style={styles.rulesBox}>
-          <Text style={styles.rulesTitle}>À savoir</Text>
-          <Text style={styles.rulesText}>
-            • Capital garanti (hors pénalité de sortie anticipée){'\n'}
-            • Taux d'intérêt fixé à la souscription{'\n'}
-            • Intérêts versés à l'échéance uniquement
-          </Text>
+          <Text style={styles.rulesTitle}>{i18n.t('accounts.rules_title')}</Text>
+          <Text style={styles.rulesText}>{i18n.t('accounts.term_deposit_rules')}</Text>
         </View>
 
         {/* Confirm button — only enabled after calculator preview */}
@@ -243,9 +244,7 @@ export default function OpenTermDepositScreen({ navigation }: OpenTermDepositScr
         />
 
         {!calculator ? (
-          <Text style={styles.calcHint}>
-            Utilisez le bouton « Simuler » pour prévisualiser vos gains avant de confirmer.
-          </Text>
+          <Text style={styles.calcHint}>{i18n.t('accounts.calc_hint_text')}</Text>
         ) : null}
       </ScrollView>
       </KeyboardAvoidingView>
@@ -273,9 +272,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.teal,
   },
-  icon: {
-    fontSize: 48,
-    marginBottom: 12,
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: `${colors.navy}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   title: {
     fontFamily: 'Poppins_700Bold',

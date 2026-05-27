@@ -34,10 +34,10 @@ interface OTPScreenProps {
 }
 
 export function OTPScreen({ navigation, route }: OTPScreenProps) {
-  const { userId, purpose } = route.params;
+  const { userId, purpose, otpDev } = route.params;
   const setAuth = useAuthStore((s) => s.setAuth);
 
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState(otpDev ?? '');
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN_SECONDS);
   const [resendCount, setResendCount] = useState(0);
@@ -112,6 +112,16 @@ export function OTPScreen({ navigation, route }: OTPScreenProps) {
       <View style={styles.container}>
       <Text style={styles.title}>{i18n.t('auth.otp_title')}</Text>
       <Text style={styles.subtitle}>{i18n.t('auth.otp_subtitle')}</Text>
+
+      {/* DEV mode banner — shown when SMS delivery failed and OTP came from API */}
+      {otpDev ? (
+        <View style={styles.devBanner}>
+          <Text style={styles.devBannerText}>
+            {'[DEV] SMS unavailable — OTP auto-filled: '}
+            <Text style={styles.devBannerOtp}>{otpDev}</Text>
+          </Text>
+        </View>
+      ) : null}
 
       {/* Single OTP input — numeric, auto-focuses */}
       <TextInput
@@ -232,5 +242,25 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginTop: 8,
+  },
+  devBanner: {
+    backgroundColor: '#FFF3CD',
+    borderWidth: 1,
+    borderColor: '#FFB020',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+  },
+  devBannerText: {
+    fontFamily: 'Roboto_400Regular',
+    fontSize: 13,
+    color: '#7B5800',
+    textAlign: 'center',
+  },
+  devBannerOtp: {
+    fontFamily: 'Poppins_700Bold',
+    fontSize: 15,
+    color: '#7B5800',
+    letterSpacing: 4,
   },
 });

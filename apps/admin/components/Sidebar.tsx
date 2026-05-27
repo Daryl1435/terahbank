@@ -4,34 +4,47 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import clsx from 'clsx';
-import { clearAuth, getRole, isSuperAdmin } from '@/lib/auth';
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardCheck,
+  ArrowLeftRight,
+  ShieldAlert,
+  BarChart3,
+  Settings,
+  LogOut,
+  Crown,
+  Wrench,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  Globe,
+} from 'lucide-react';
+import { clearAuth, getRole } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
 import type { AdminRole } from '@/lib/types';
 
 interface NavItem {
-  href:   string;
-  label:  string;
-  icon:   string;
-  roles?: AdminRole[];
+  href:     string;
+  labelKey: 'nav.dashboard' | 'nav.users' | 'nav.kyc' | 'nav.transactions' | 'nav.fraudAlerts' | 'nav.reports' | 'nav.config';
+  icon:     React.ComponentType<{ className?: string }>;
+  roles?:   AdminRole[];
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',    label: 'Dashboard',      icon: '⊞' },
-  { href: '/users',        label: 'Users',           icon: '👥' },
-  { href: '/kyc',          label: 'KYC Queue',       icon: '📋' },
-  { href: '/transactions', label: 'Transactions',    icon: '↔' },
-  { href: '/fraud-alerts', label: 'Fraud Alerts',    icon: '⚠' },
-  { href: '/reports',      label: 'Reports',         icon: '📊' },
-  {
-    href:  '/config',
-    label: 'Configuration',
-    icon:  '⚙',
-    roles: ['super_admin'],
-  },
+  { href: '/dashboard',    labelKey: 'nav.dashboard',    icon: LayoutDashboard },
+  { href: '/users',        labelKey: 'nav.users',         icon: Users },
+  { href: '/kyc',          labelKey: 'nav.kyc',           icon: ClipboardCheck },
+  { href: '/transactions', labelKey: 'nav.transactions',  icon: ArrowLeftRight },
+  { href: '/fraud-alerts', labelKey: 'nav.fraudAlerts',   icon: ShieldAlert },
+  { href: '/reports',      labelKey: 'nav.reports',       icon: BarChart3 },
+  { href: '/config',       labelKey: 'nav.config',        icon: Settings, roles: ['super_admin'] },
 ];
 
 export default function Sidebar() {
-  const pathname  = usePathname();
-  const router    = useRouter();
+  const pathname = usePathname();
+  const router   = useRouter();
+  const { t, lang, setLang } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const role = getRole();
 
@@ -68,19 +81,25 @@ export default function Sidebar() {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className="p-1.5 rounded hover:bg-white/10 transition-colors text-mid-grey hover:text-white flex-shrink-0"
-          aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+          aria-label={collapsed ? t('sidebar.expandAriaLabel') : t('sidebar.collapseAriaLabel')}
         >
-          {collapsed ? '›' : '‹'}
+          {collapsed
+            ? <ChevronRight className="w-4 h-4" />
+            : <ChevronLeft  className="w-4 h-4" />
+          }
         </button>
       </div>
 
       {/* Role badge */}
       {!collapsed && role && (
-        <div className="px-4 py-2 border-b border-white/10">
+        <div className="px-4 py-2 border-b border-white/10 flex items-center gap-1.5">
+          {role === 'super_admin'       && <Crown  className="w-3.5 h-3.5 text-mid-grey flex-shrink-0" />}
+          {role === 'operations_staff'  && <Wrench className="w-3.5 h-3.5 text-mid-grey flex-shrink-0" />}
+          {role === 'read_only_analyst' && <Eye    className="w-3.5 h-3.5 text-mid-grey flex-shrink-0" />}
           <span className="text-xs text-mid-grey font-roboto">
-            {role === 'super_admin'       && '👑 Super Admin'}
-            {role === 'operations_staff'  && '🛠 Operations'}
-            {role === 'read_only_analyst' && '👁 Analyst'}
+            {role === 'super_admin'       && t('role.superAdmin')}
+            {role === 'operations_staff'  && t('role.operations')}
+            {role === 'read_only_analyst' && t('role.analyst')}
           </span>
         </div>
       )}
@@ -89,6 +108,7 @@ export default function Sidebar() {
       <nav className="flex-1 py-2 overflow-y-auto" aria-label="Main navigation">
         {visibleItems.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
@@ -100,27 +120,44 @@ export default function Sidebar() {
                   : 'text-mid-grey hover:text-white hover:bg-white/5',
                 collapsed && 'justify-center px-0',
               )}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? t(item.labelKey) : undefined}
             >
-              <span className="text-lg leading-none flex-shrink-0">{item.icon}</span>
-              {!collapsed && <span className="font-roboto">{item.label}</span>}
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              {!collapsed && <span className="font-roboto">{t(item.labelKey)}</span>}
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout */}
-      <div className="border-t border-white/10 p-3">
+      {/* Language toggle + Logout */}
+      <div className="border-t border-white/10 p-3 flex flex-col gap-1">
+        <button
+          onClick={() => setLang(lang === 'en' ? 'fr' : 'en')}
+          className={clsx(
+            'flex items-center gap-3 w-full rounded px-3 py-2 text-sm text-mid-grey hover:text-white hover:bg-white/10 transition-colors',
+            collapsed && 'justify-center',
+          )}
+          title={collapsed ? t('lang.toggle') : undefined}
+          aria-label={`Switch to ${lang === 'en' ? 'Français' : 'English'}`}
+        >
+          <Globe className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && (
+            <span className="font-mono text-xs font-medium tracking-wider">
+              {t('lang.toggle')}
+            </span>
+          )}
+        </button>
+
         <button
           onClick={handleLogout}
           className={clsx(
             'flex items-center gap-3 w-full rounded px-3 py-2 text-sm text-mid-grey hover:text-white hover:bg-white/10 transition-colors',
             collapsed && 'justify-center',
           )}
-          title={collapsed ? 'Sign out' : undefined}
+          title={collapsed ? t('nav.signOut') : undefined}
         >
-          <span className="text-lg leading-none">⏏</span>
-          {!collapsed && <span>Sign out</span>}
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && <span>{t('nav.signOut')}</span>}
         </button>
       </div>
     </aside>

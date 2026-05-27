@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   notificationsService,
   UpdatePreferencesPayload,
+  DEFAULT_PREFERENCES,
 } from '@/services/notifications';
 
 const NOTIFICATIONS_KEY = ['notifications'];
@@ -30,6 +31,7 @@ export const useNotificationPreferences = () =>
     queryKey: PREFS_KEY,
     queryFn: () => notificationsService.getPreferences(),
     staleTime: 5 * 60 * 1000,
+    initialData: DEFAULT_PREFERENCES,
   });
 
 // ── Mutation hooks ─────────────────────────────────────────────────────────────
@@ -61,7 +63,16 @@ export const useUpdateNotificationPreferences = () => {
   return useMutation({
     mutationFn: (payload: UpdatePreferencesPayload) =>
       notificationsService.updatePreferences(payload),
-    onSuccess: () => {
+    onMutate: async (payload) => {
+      await qc.cancelQueries({ queryKey: PREFS_KEY });
+      const prev = qc.getQueryData(PREFS_KEY);
+      qc.setQueryData(PREFS_KEY, (old: typeof DEFAULT_PREFERENCES) => ({ ...old, ...payload }));
+      return { prev };
+    },
+    onError: (_err, _payload, context) => {
+      if (context?.prev) qc.setQueryData(PREFS_KEY, context.prev);
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: PREFS_KEY });
     },
   });

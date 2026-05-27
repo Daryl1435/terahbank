@@ -17,6 +17,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -24,6 +26,8 @@ import type { RootStackParamList } from '../../App';
 import { useDeposit } from '@/hooks/useTransactions';
 import { useTotalBalance } from '@/hooks/useBalance';
 import { TerahButton } from '@/components/TerahButton';
+import { ChannelLogo } from '@/components/ChannelLogo';
+import type { PaymentChannel } from '@/components/ChannelLogo';
 import { colors, spacing, radius } from '@/utils/tokens';
 import { formatXAF } from '@/utils/formatXAF';
 import i18n from '@/locales';
@@ -37,10 +41,10 @@ interface DepositScreenProps {
 type Channel = 'mtn_momo' | 'orange_money' | 'visa';
 type Step = 1 | 2 | 3;
 
-const CHANNELS: Array<{ id: Channel; labelKey: string; active: boolean; icon: string }> = [
-  { id: 'mtn_momo',     labelKey: 'transactions.deposit_channel_momo',   active: true,  icon: '📱' },
-  { id: 'orange_money', labelKey: 'transactions.deposit_channel_orange',  active: true,  icon: '🟠' },
-  { id: 'visa',         labelKey: 'transactions.deposit_channel_card',    active: true,  icon: '💳' },
+const CHANNELS: Array<{ id: Channel; labelKey: string; active: boolean }> = [
+  { id: 'mtn_momo',     labelKey: 'transactions.deposit_channel_momo',   active: true },
+  { id: 'orange_money', labelKey: 'transactions.deposit_channel_orange',  active: true },
+  { id: 'visa',         labelKey: 'transactions.deposit_channel_card',    active: true },
 ];
 
 export default function DepositScreen({ navigation }: DepositScreenProps) {
@@ -155,7 +159,9 @@ export default function DepositScreen({ navigation }: DepositScreenProps) {
               accessibilityRole="radio"
               accessibilityState={{ selected: selectedChannel === ch.id, disabled: !ch.active }}
             >
-              <Text style={styles.channelIcon}>{ch.icon}</Text>
+              <View style={{ marginRight: spacing.md }}>
+                <ChannelLogo channel={ch.id as PaymentChannel} size={40} />
+              </View>
               <View style={styles.channelInfo}>
                 <Text style={[styles.channelLabel, !ch.active && styles.channelLabelDisabled]}>
                   {i18n.t(ch.labelKey)}
@@ -191,8 +197,9 @@ export default function DepositScreen({ navigation }: DepositScreenProps) {
   if (step === 2) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-          {renderHeader()}
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView style={styles.screen} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            {renderHeader()}
           <Text style={styles.sectionTitle}>
             {i18n.t('transactions.deposit_amount_title')}
           </Text>
@@ -255,12 +262,13 @@ export default function DepositScreen({ navigation }: DepositScreenProps) {
           )}
 
           <TerahButton
-            label={i18n.t('common.continue')}
-            onPress={handleAmountNext}
-            disabled={!selectedAccountId || !amountXAF}
-            style={styles.cta}
-          />
-        </ScrollView>
+              label={i18n.t('common.continue')}
+              onPress={handleAmountNext}
+              disabled={!selectedAccountId || !amountXAF}
+              style={styles.cta}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -352,7 +360,7 @@ const styles = StyleSheet.create({
   },
   channelCardSelected: { borderColor: colors.teal },
   channelCardDisabled: { opacity: 0.5 },
-  channelIcon: { fontSize: 28, marginRight: spacing.md },
+  channelIcon: { marginRight: spacing.md },
   channelInfo: { flex: 1 },
   channelLabel: {
     fontFamily: 'Poppins_600SemiBold',

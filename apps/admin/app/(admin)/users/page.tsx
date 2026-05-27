@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { listUsers } from '@/lib/api';
 import { formatDate, maskPhone } from '@/lib/format';
+import { useTranslation } from '@/lib/i18n';
 import Badge, { statusVariant } from '@/components/Badge';
 import Pagination from '@/components/Pagination';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -15,6 +17,7 @@ const KYC_STATUSES     = ['', 'pending', 'approved', 'rejected'];
 const ACCOUNT_STATUSES = ['', 'active', 'suspended', 'closed'];
 
 export default function UsersPage() {
+  const { t } = useTranslation();
   const [search,        setSearch]        = useState('');
   const [kycStatus,     setKycStatus]     = useState('');
   const [accountStatus, setAccountStatus] = useState('');
@@ -45,20 +48,20 @@ export default function UsersPage() {
   const users = data?.data.users ?? [];
   const total = data?.data.total ?? 0;
 
+  const countText = t('users.count').replace('{count}', String(total));
+
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">Users</h1>
-        <p className="text-mid-grey text-sm mt-1">
-          {total > 0 ? `${total} user${total > 1 ? 's' : ''}` : 'Searching…'}
-        </p>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">{t('users.title')}</h1>
+        <p className="text-mid-grey text-sm mt-1">{countText}</p>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-card p-4 mb-6 flex flex-wrap gap-3">
         <input
           type="search"
-          placeholder="Search name, email, phone…"
+          placeholder={t('users.filters.search')}
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           className="flex-1 min-w-[220px] px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
@@ -68,7 +71,7 @@ export default function UsersPage() {
           onChange={(e) => { setKycStatus(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">All KYC</option>
+          <option value="">{t('users.filters.allKyc')}</option>
           {KYC_STATUSES.slice(1).map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -78,7 +81,7 @@ export default function UsersPage() {
           onChange={(e) => { setAccountStatus(e.target.value); setOffset(0); }}
           className="px-3 py-2 border border-light-grey rounded-lg text-sm focus:outline-none focus:border-teal"
         >
-          <option value="">All statuses</option>
+          <option value="">{t('users.filters.allStatus')}</option>
           {ACCOUNT_STATUSES.slice(1).map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -92,21 +95,21 @@ export default function UsersPage() {
             <LoadingSpinner className="w-8 h-8" />
           </div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Failed to load users.</p>
+          <p className="text-error text-sm text-center py-16">{t('users.loadError')}</p>
         ) : users.length === 0 ? (
-          <p className="text-mid-grey text-sm text-center py-16">No users found.</p>
+          <p className="text-mid-grey text-sm text-center py-16">{t('users.noResults')}</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm admin-table">
                 <thead>
                   <tr>
-                    <th className="text-left px-4 py-3">Name</th>
-                    <th className="text-left px-4 py-3">Email</th>
-                    <th className="text-left px-4 py-3">Phone</th>
-                    <th className="text-left px-4 py-3">KYC</th>
-                    <th className="text-left px-4 py-3">Account</th>
-                    <th className="text-left px-4 py-3">Joined</th>
+                    <th className="text-left px-4 py-3">{t('users.table.name')}</th>
+                    <th className="text-left px-4 py-3">{t('users.table.email')}</th>
+                    <th className="text-left px-4 py-3">{t('users.table.phone')}</th>
+                    <th className="text-left px-4 py-3">{t('users.table.kyc')}</th>
+                    <th className="text-left px-4 py-3">{t('users.table.account')}</th>
+                    <th className="text-left px-4 py-3">{t('users.table.joined')}</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -126,9 +129,10 @@ export default function UsersPage() {
                       <td className="px-4 py-3">
                         <Link
                           href={`/users/${user.user_id}`}
-                          className="text-teal text-xs hover:underline font-medium"
+                          className="flex items-center gap-1 text-teal text-xs hover:underline font-medium"
                         >
-                          Detail →
+                          {t('users.detail')}
+                          <ArrowRight className="w-3 h-3" />
                         </Link>
                       </td>
                     </tr>

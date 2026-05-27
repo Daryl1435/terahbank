@@ -2,9 +2,12 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AlertTriangle } from 'lucide-react';
 import { getConfig, updateConfig } from '@/lib/api';
 import { formatDateTime } from '@/lib/format';
 import { isSuperAdmin } from '@/lib/auth';
+import { useTranslation } from '@/lib/i18n';
+import type { TranslationKey } from '@/lib/i18n';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import type { ConfigItem } from '@/lib/types';
 
@@ -21,21 +24,22 @@ const AMOUNT_KEYS = new Set([
   'visa_max_cards_per_user',
 ]);
 
-function validateConfigValue(key: string, value: string): string | null {
-  if (!value.trim()) return 'Value is required.';
+function validateConfigValue(key: string, value: string): TranslationKey | null {
+  if (!value.trim()) return 'config.validation.required';
   if (RATE_KEYS.has(key)) {
     const n = parseFloat(value);
-    if (isNaN(n) || n < 0 || n > 1) return 'Invalid rate. Must be a decimal between 0 and 1 (e.g. 0.015).';
+    if (isNaN(n) || n < 0 || n > 1) return 'config.validation.invalidRate';
   }
   if (AMOUNT_KEYS.has(key)) {
     const n = parseInt(value, 10);
-    if (isNaN(n) || n < 0) return 'Invalid amount. Must be a positive integer.';
+    if (isNaN(n) || n < 0) return 'config.validation.invalidAmount';
   }
   return null;
 }
 
 function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [editing,   setEditing]   = useState(false);
   const [editValue, setEditValue] = useState(item.value);
   const [valError,  setValError]  = useState<string | null>(null);
@@ -50,8 +54,8 @@ function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
   });
 
   function handleSave() {
-    const err = validateConfigValue(item.key, editValue);
-    if (err) { setValError(err); return; }
+    const errKey = validateConfigValue(item.key, editValue);
+    if (errKey) { setValError(t(errKey)); return; }
     mutation.mutate({ key: item.key, value: editValue });
   }
 
@@ -98,13 +102,13 @@ function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
                 className="px-3 py-1 bg-teal text-white rounded text-xs font-medium hover:bg-teal-dark transition-colors disabled:opacity-50 flex items-center gap-1"
               >
                 {mutation.isPending && <LoadingSpinner />}
-                Save
+                {t('config.save')}
               </button>
               <button
                 onClick={handleCancel}
                 className="px-3 py-1 border border-light-grey rounded text-xs text-dark-grey hover:bg-light-grey transition-colors"
               >
-                Cancel
+                {t('config.cancel')}
               </button>
             </div>
           ) : (
@@ -112,7 +116,7 @@ function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
               onClick={() => setEditing(true)}
               className="px-3 py-1 border border-light-grey rounded text-xs text-teal hover:bg-light-grey transition-colors"
             >
-              Edit
+              {t('config.edit')}
             </button>
           )
         )}
@@ -123,6 +127,7 @@ function ConfigRow({ item, canEdit }: { item: ConfigItem; canEdit: boolean }) {
 
 export default function ConfigPage() {
   const canEdit = isSuperAdmin();
+  const { t } = useTranslation();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin', 'config'],
@@ -134,17 +139,16 @@ export default function ConfigPage() {
   return (
     <div className="p-8">
       <div className="mb-6">
-        <h1 className="font-poppins font-semibold text-2xl text-navy">System Configuration</h1>
+        <h1 className="font-poppins font-semibold text-2xl text-navy">{t('config.title')}</h1>
         <p className="text-mid-grey text-sm mt-1">
-          {canEdit
-            ? 'Editable settings — rates, limits and operational thresholds.'
-            : 'Read-only — only a Super Admin can modify configuration.'}
+          {canEdit ? t('config.subtitleEdit') : t('config.subtitleRead')}
         </p>
       </div>
 
       {!canEdit && (
-        <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning/30 text-sm text-dark-grey">
-          ⚠ Restricted access: configuration changes are reserved for Super Admins.
+        <div className="mb-6 p-4 rounded-xl bg-warning/10 border border-warning/30 text-sm text-dark-grey flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
+          {t('config.restricted')}
         </div>
       )}
 
@@ -152,17 +156,17 @@ export default function ConfigPage() {
         {isLoading ? (
           <div className="flex items-center justify-center py-16"><LoadingSpinner className="w-8 h-8" /></div>
         ) : isError ? (
-          <p className="text-error text-sm text-center py-16">Failed to load configuration.</p>
+          <p className="text-error text-sm text-center py-16">{t('config.loadError')}</p>
         ) : configs.length === 0 ? (
-          <p className="text-mid-grey text-sm text-center py-16">No configuration entries found.</p>
+          <p className="text-mid-grey text-sm text-center py-16">{t('config.noEntries')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm admin-table">
               <thead>
                 <tr>
-                  <th className="text-left px-4 py-3">Key</th>
-                  <th className="text-left px-4 py-3">Value</th>
-                  <th className="text-left px-4 py-3">Last updated</th>
+                  <th className="text-left px-4 py-3">{t('config.table.key')}</th>
+                  <th className="text-left px-4 py-3">{t('config.table.value')}</th>
+                  <th className="text-left px-4 py-3">{t('config.table.lastUpdated')}</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>

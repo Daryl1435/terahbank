@@ -100,3 +100,12 @@ async def verify_pin(
 ) -> TerahResponse:
     """FR-036: Verify PIN and receive a single-use pin_token (valid 60 s) for transfer confirmation."""
     return await AuthService(db).verify_pin(user, payload)
+
+
+@router.get("/me", response_model=TerahResponse)
+async def get_me(
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> TerahResponse:
+    """Return the authenticated user's profile (name, phone, email)."""
+    return await AuthService(db).get_me(user)
