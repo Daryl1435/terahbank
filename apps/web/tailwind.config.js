@@ -39,6 +39,33 @@ module.exports = {
         modal: '0 8px 32px rgba(11, 31, 74, 0.16)',
         nav:   '0 2px 4px rgba(11, 31, 74, 0.06)',
       },
+      animation: {
+        'gradient-orb':         'gradient-orb 8s ease-in-out infinite alternate',
+        'gradient-orb-delayed': 'gradient-orb 8s ease-in-out 4s infinite alternate',
+        float:                  'float 6s ease-in-out infinite',
+        'fade-up':              'fade-up 0.6s ease-out forwards',
+      },
+      keyframes: {
+        'gradient-orb': {
+          '0%':   { transform: 'translate(0, 0) scale(1)' },
+          '100%': { transform: 'translate(40px, -30px) scale(1.15)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%':      { transform: 'translateY(-10px)' },
+        },
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'dot-grid':        "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+      },
+      backgroundSize: {
+        'dot-grid': '28px 28px',
+      },
     },
   },
   plugins: [],

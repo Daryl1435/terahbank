@@ -74,3 +74,13 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Gradient text utility ───────────────────────────────────────────────── */
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, #00B4D8 0%, #00C48C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
